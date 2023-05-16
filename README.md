@@ -9,7 +9,7 @@
 - code to run SPI also as slave (compile option)
 - initialize and use SD Card (from command line)
 
-##Intentions
+## Intentions
 - add TFTP to/from SD Card via ETH
 - add Pico-C (C-code interpreter, using EXTMEN for scripts)
 - add HTTPD server web pages, with forms to enter commands in Web Browser
