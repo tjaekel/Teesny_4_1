@@ -109,6 +109,8 @@ void printTime(const DateTimeFields tm) {
 #include "cmd_dec.h"
 #include "HTTP_server.h"
 #include "SD_Card.h"
+#include "SYS_config.h"
+#include "TFTP.h"
 
 char* UARTcmd = NULL;
 
@@ -133,7 +135,12 @@ void setup() {
     // set the digital pin as output:
     ////pinMode(ledPin, OUTPUT);
 
+    CFG_Read();
+
+    ////TFTP_setup();
+
     VCP_UART_setup();
+
     HTTPD_setup();
 
     SPI_setup();

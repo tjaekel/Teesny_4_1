@@ -1,6 +1,8 @@
 #ifndef CMD_DEC_H_
 #define CMD_DEC_H_
 
+////using namespace std;
+
 #define VERSION_INFO		"V1.00"
 
 #include <stdint.h>

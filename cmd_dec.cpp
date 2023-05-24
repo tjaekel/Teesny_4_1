@@ -9,6 +9,8 @@
 
 #include "SPI_dev.h"
 #include "SD_Card.h"
+#include "SYS_config.h"
+#include "TFTP.h"
 
 #if 1
 unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE];
@@ -64,6 +66,12 @@ ECMD_DEC_Status CMD_i2cclk(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out);
+
+ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
+
+ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out);
+
+ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 
 const TCMD_DEC_Command Commands[] = {
 		{
@@ -130,6 +138,21 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"rawspi",
 				.help = (const char*)"send bytes via SPI <byte ...>",
 				.func = CMD_rawspi
+		},
+		{
+				.cmd = (const char*)"syscfg",
+				.help = (const char*)"print sys config parameters",
+				.func = CMD_syscfg
+		},
+    {
+				.cmd = (const char*)"tftp",
+				.help = (const char*)"start TFTP server",
+				.func = CMD_tftp
+		},
+    {
+				.cmd = (const char*)"ipaddr",
+				.help = (const char*)"display the MCU IP address",
+				.func = CMD_ipaddr
 		},
 };
 
@@ -673,6 +696,40 @@ ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
 
 ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
   SDCARD_printDirectory("/", 0);
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
+  if (res->opt) {
+    if (strncmp(res->opt, "-d", 2) == 0) {
+      CFG_SetDefault();
+      return CMD_DEC_OK;
+    }
+    if (strncmp(res->opt, "-w", 2) == 0) {
+      CFG_Write();
+      return CMD_DEC_OK;
+    }
+  }
+
+  CFG_Print();
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out) {
+  TFTP_setup();
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
+  extern uint32_t HTTPD_GetIPAddress(void);
+  uint32_t ipAddr;
+
+  ipAddr = HTTPD_GetIPAddress();
+  print_log(out, (const char *)"IP address: %ld.%ld.%ld.%ld\r\n",
+    (ipAddr >> 0) & 0xFF, (ipAddr >> 8) & 0xFF, (ipAddr >> 16) & 0xFF, (ipAddr >> 24) & 0xFF);
 
   return CMD_DEC_OK;
 }
