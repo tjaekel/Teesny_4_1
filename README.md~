@@ -11,7 +11,7 @@
 
 ## Intentions
 - add TFTP to/from SD Card via ETH - DONE
-  activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)
+  activate from UART command like via "tftp", run TFTP as a thread (in background, not blocking UART command line)
 - add Pico-C (C-code interpreter, using EXTMEN for scripts)
 - add HTTPD server web pages, with forms to enter commands in Web Browser
   (no need for Telnet)
