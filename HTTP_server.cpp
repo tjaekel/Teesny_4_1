@@ -72,11 +72,11 @@ void thread_HTTPD(void) {
 
   while(1) {
     // listen for incoming clients
+
+    serverLock.lock();
+
     EthernetClient client = server.available();
     if (client) {
-
-      serverLock.lock();
-
       Serial.println("new client");
       // an http request ends with a blank line
       boolean currentLineIsBlank = false;
@@ -139,11 +139,11 @@ void thread_HTTPD(void) {
       client.stop();
       Serial.println("client disconnected");
 
-      serverLock.unlock();
     }
     threads.delay(1);
     threads.yield();
 
+    serverLock.unlock();
   }
 }
 
@@ -152,11 +152,11 @@ void thread_NETCMD(void) {
 
   while(1) {
     // listen for incoming clients
+
+    serverLock.lock();
+
     EthernetClient client = serverNETCMD.available();
     if (client) {
-
-      serverLock.lock();
-
       Serial.println("new client");
       // an http request ends with a blank line
       boolean currentLineIsBlank = false;
@@ -218,11 +218,10 @@ void thread_NETCMD(void) {
       // close the connection:
       client.stop();
       Serial.println("client disconnected");
-
-      serverLock.unlock();
     }
     threads.delay(1);
     threads.yield();
 
+    serverLock.unlock();
   }
 }
