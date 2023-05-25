@@ -77,3 +77,76 @@ void VCP_UART_hexDump(unsigned char* b, int len) {
         Serial.print(" ");
     }
 }
+
+void UART_printString(const char *s, EResultOut out) {
+  ////Serial.print(s);
+  while (*s)
+    Serial.print(*s++);
+}
+
+int UART_getString(unsigned char *b, size_t l)
+{
+    int incomingByte;
+    int x = 0;
+
+    if (Serial.available() > 0) {
+        incomingByte = Serial.read();
+        
+        if (incomingByte == 0x08) {
+            if (numAvail) {
+                Serial.write(0x08);
+                Serial.write(' ');
+                Serial.write(0x08);
+                numAvail--;
+            }
+            return 0;
+        }
+
+        if (incomingByte == '\r')
+        {
+            if (numAvail) {
+                Serial.write('\r');
+                Serial.write('\n');
+            }
+            b[numAvail++] = '\r';
+            b[numAvail] = '\0';
+            x = numAvail;
+            numAvail = 0;
+            return x;
+        }
+
+        b[numAvail++] = (unsigned char)incomingByte;
+        //local echo
+        Serial.write(incomingByte);
+
+        if (numAvail > (l- 2))
+        {
+            Serial.write('\n');
+            b[numAvail] = '\0';
+            x = numAvail;
+            numAvail = 0;
+
+            Serial.write('\r');
+            Serial.write('\n');
+            return x;
+        }
+    }
+
+    return 0;
+}
+
+int UART_getChar(void) {
+  while (1) {
+    if (Serial.available() > 0) {
+      return Serial.read();
+    }
+    delay(10);
+  }
+}
+
+void UART_putChar(unsigned char c) {
+  //Serial.print((char)c);
+  Serial.write(c);
+  if (c == '\n')
+    Serial.write('\r');
+}

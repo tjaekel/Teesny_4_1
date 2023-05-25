@@ -4,6 +4,7 @@
 
 #include <string.h>
 
+#include "MEM_Pool.h"
 #include "cmd_dec.h"
 #include "debug_sys.h"
 
@@ -11,8 +12,7 @@
 #include "SD_Card.h"
 #include "SYS_config.h"
 #include "TFTP.h"
-////#include "picoc.h"
-#include "MEM_Pool.h"
+#include "picoc.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -710,7 +710,7 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
 
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 {
-	////pico_c_main_interactive(0, NULL);
+	pico_c_main_interactive(0, NULL);
 
 	return CMD_DEC_OK;
 }

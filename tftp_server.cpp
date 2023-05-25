@@ -102,7 +102,8 @@ void send_data() {
   pktout[1] = swap2(tftp_state.blknum);
   ret = tftp_state.ctx->read(tftp_state.handle, pbufout, TFTP_MAX_PAYLOAD_SIZE);
   if (ret < 0) {
-    send_error(&tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Error occured while reading the file.");
+    //send_error(&tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Error occured while reading the file.");
+    send_error(tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Error occured while reading the file.");
     close_connection();
     return;
   }

@@ -10,9 +10,10 @@
 - initialize and use SD Card (from command line)
 
 ## Intentions
-- add TFTP to/from SD Card via ETH - DONE
+- add TFTP to/from SD Card via ETH - DONE<br>
   activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)
-- add Pico-C (C-code interpreter, using EXTMEN for scripts)
+- add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
+  activate from UART command line via "picoc", works, just add additional commands, e.g. to do a SPI transaction, delay, etc.
 - add HTTPD server web pages, with forms to enter commands in Web Browser
   (no need for Telnet)
   THIS SEEMS TO HAVE A BUG in Arduino LIB: two servers with different ports at the same time do NOT work,

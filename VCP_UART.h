@@ -20,10 +20,28 @@ typedef enum {
 
 extern char XPrintBuf[XPRINT_LEN];
 
+void VCP_UART_setup(void);
+char* VCP_UART_getString(void);
+void VCP_UART_putString(const char* s);
+void VCP_UART_printPrompt(void);
+void VCP_UART_hexDump(unsigned char* b, int len);
+
+/* interfaces for Pico-C */
+#ifdef __cplusplus
+extern "C" {
+#endif
+void UART_printString(const char *buf, EResultOut out);
+int UART_getString(unsigned char *b, size_t len);
+int UART_getChar(void);
+void UART_putChar(unsigned char c);
+#ifdef __cplusplus
+}
+#endif
+
 #define print_log(out, ...)		do {\
 									if (out != SILENT) {\
 										snprintf(XPrintBuf, XPRINT_LEN - 1, __VA_ARGS__);\
-										VCP_UART_putString((const char *)XPrintBuf);\
+										UART_printString((char *)XPrintBuf, out);\
 									}\
 								} while(0)
 
@@ -33,12 +51,6 @@ extern char XPrintBuf[XPRINT_LEN];
 										VCP_UART_putString((const char *)XPrintBuf);\
 									}\
 								} while(0)
-
-void VCP_UART_setup(void);
-char* VCP_UART_getString(void);
-void VCP_UART_putString(const char* s);
-void VCP_UART_printPrompt(void);
-void VCP_UART_hexDump(unsigned char* b, int len);
 
 #endif
 
