@@ -58,6 +58,7 @@ int tftp_fs_write(void *handle, void *buf, int bytes)
   return ret;
 }
 
+#if 0
 static void teensyMAC(uint8_t *mac)
 {
   uint32_t m1 = HW_OCOTP_MAC1;
@@ -69,6 +70,7 @@ static void teensyMAC(uint8_t *mac)
   mac[4] = m2 >> 8;
   mac[5] = m2 >> 0;
 }
+#endif
 
 extern void tftp_thread(void);
 /*const*/ tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };

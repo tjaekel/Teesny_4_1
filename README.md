@@ -9,14 +9,14 @@
 - code to run SPI also as slave (compile option)
 - initialize and use SD Card (from command line)
 
-## Intentions
+## Intention Items
 - add TFTP to/from SD Card via ETH - DONE<br>
   activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)
+  ATTENTION: "tftp" kills the web servers (not using the same ETH LIB)
 - add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
   activate from UART command line via "picoc", works, just add additional commands, e.g. to do a SPI transaction, delay, etc.
 - add HTTPD server web pages, with forms to enter commands in Web Browser
-  (no need for Telnet)
-  THIS SEEMS TO HAVE A BUG in Arduino LIB: two servers with different ports at the same time do NOT work,
-  it needs at least a Mutex (Lock) so that just one server is active at a time!
+  (no need for Telnet)<br>
+  use QNEthernet and AsyncWebServer: two instances (port 80 and 8080) are working in parallel - DONE
 - a second SPI, a shared SPI (same bus with two PCS/SS signals)
 

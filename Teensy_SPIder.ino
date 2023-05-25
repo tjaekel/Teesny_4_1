@@ -36,6 +36,12 @@ void setup() {
     // set the digital pin as output:
     ////pinMode(ledPin, OUTPUT);
 
+    Serial.begin(115200);       //baudrate does not matter: it is VCP UART, any baudrate works
+#if 1
+    while (!Serial) {}
+    delay(200);
+#endif
+
     CFG_Read();
 
     ////TFTP_setup();
