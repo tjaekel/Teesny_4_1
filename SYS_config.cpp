@@ -27,7 +27,7 @@ void CFG_Print(void) {
   size_t i;
   unsigned long *ptr = (unsigned long *)&gCFGparams;
   for (i = 0; i < (sizeof(tCFGParams) / sizeof(unsigned long)); i++) {
-    VCP_UART_printf("%2d : %08lx\r\n", i, *ptr++);
+    print_log(UART_OUT, "%2d : %08lx\r\n", i, *ptr++);
   }
 }
 

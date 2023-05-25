@@ -7,9 +7,11 @@
 static char UARTbuffer[80];
 static size_t numAvail = 0;
 
+char XPrintBuf[XPRINT_LEN];
+
 void VCP_UART_setup(void)
 {
-	////Serial.begin(9600);     //it is already initialized
+	Serial.begin(9600);
     //while (!Serial);          // wait, until host terminal avaialble
 }
 

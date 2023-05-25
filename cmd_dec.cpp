@@ -11,41 +11,8 @@
 #include "SD_Card.h"
 #include "SYS_config.h"
 #include "TFTP.h"
-
-#if 1
-unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE];
-char XPrintBuf[XPRINT_LEN];
-
-static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS];
-
-void MEM_PoolInit(void) {
-  memset(MEMPool_mgt, 0, sizeof(MEMPool_mgt));
-}
-
-void *MEM_PoolAlloc(int size)
-{
-	int i;
-	for (i = 0; i < MEM_POOL_NUM_SEGMENTS; i++)
-		if (MEMPool_mgt[i] == 0)
-		{
-			MEMPool_mgt[i] = 1;			//allocated, in use now
-			return &GMEMPool[MEM_POOL_SEG_SIZE * i];
-		}
-	//set syserr
-	return NULL;						//not available, out of memory
-}
-
-void MEM_PoolFree(void *mem)
-{
-	int i;
-	//find the segment and release it
-	for (i = 0; i < MEM_POOL_NUM_SEGMENTS; i++)
-		if (mem == (void*)(&GMEMPool[MEM_POOL_SEG_SIZE * i]))
-			MEMPool_mgt[i] = 0;			//de-allocate, free now
-	//else: not found, wrong address to release
-	//set syserr
-}
-#endif
+////#include "picoc.h"
+#include "MEM_Pool.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -72,6 +39,8 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
+
+ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
 
 const TCMD_DEC_Command Commands[] = {
 		{
@@ -153,6 +122,11 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"ipaddr",
 				.help = (const char*)"display the MCU IP address",
 				.func = CMD_ipaddr
+		},
+    {
+				.cmd = (const char*)"picoc",
+				.help = (const char*)"start Pico-C interpreter",
+				.func = CMD_picoc
 		},
 };
 
@@ -732,4 +706,11 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
     (ipAddr >> 0) & 0xFF, (ipAddr >> 8) & 0xFF, (ipAddr >> 16) & 0xFF, (ipAddr >> 24) & 0xFF);
 
   return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
+{
+	////pico_c_main_interactive(0, NULL);
+
+	return CMD_DEC_OK;
 }

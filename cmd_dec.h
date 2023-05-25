@@ -20,23 +20,9 @@
 #define CMD_DEC_SEPARATOR	';'				/* different commands in single line */
 #define CMD_DEC_COMMENT		'#'				/* comment after command - rest of line ignored */
 
-#if 1
-#define MEM_POOL_NUM_SEGMENTS	4
-#define MEM_POOL_SEG_SIZE	2048			/* as unsigned long, 4x */
-#endif
-
 #define XPRINT_LEN			(80*64)			/* max. length print buffer/strings/lines */
 
 ////#define UART_BAUDRATE		6000000			/* 1843200 UART baud rate */
-
-////extern const char* getIPAddress(void);
-
-typedef enum {
-	UART_OUT,
-	HTTPD_OUT,
-	HTTPD_OUT_ONLY,
-	SILENT
-} EResultOut;
 
 typedef enum {
 	CMD_DEC_OK = 0,							/* all OK */
@@ -73,21 +59,6 @@ typedef struct {
 	void  UART_SendStr(const char* str, EResultOut out);
 	char* UART_GetString(void);
 //}
-
-extern char XPrintBuf[XPRINT_LEN];
-#define print_log(out, ...)		do {\
-									if (out != SILENT) {\
-										snprintf(XPrintBuf, XPRINT_LEN - 1, __VA_ARGS__);\
-										UART_Send((const char *)XPrintBuf, (unsigned int)strlen(XPrintBuf), out);\
-									}\
-								} while(0)
-
-#define debug_log(...)			do {\
-									if (GDebug & DBG_VERBOSE) {\
-										snprintf(XPrintBuf, XPRINT_LEN - 1, __VA_ARGS__);\
-										UART_Send((const char *)XPrintBuf, (unsigned int)strlen(XPrintBuf), UART_OUT);\
-									}\
-								} while(0)
 
 #define UART_GetString    VCP_UART_getString
 

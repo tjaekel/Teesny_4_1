@@ -9,11 +9,11 @@
 /* ATT: include just once, not here, not again through SPI_dev.h loaded in sketch *.ino! */
 ////#include "TsyDMASPI.h"
 #else
-#if defined(ARDUINO) && ARDUINO >= 100
-	#include "arduino.h"
-#else
-	#include "WProgram.h"
-#endif
+//#if defined(ARDUINO) && ARDUINO >= 100
+	#include <arduino.h>
+//#else
+//	#include "WProgram.h"
+//#endif
 #include "SPI.h"
 #endif
 
