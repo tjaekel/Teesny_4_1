@@ -9,10 +9,10 @@
 - code to run SPI also as slave (compile option)
 - initialize and use SD Card (from command line)
 
-## Intention Items
+## Work Items
 - add TFTP to/from SD Card via ETH - DONE<br>
-  activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)
-  ATTENTION: "tftp" kills the web servers (not using the same ETH LIB)
+  activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)<br>
+  change tftp_server to QNEthernet - DONE
 - add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
   activate from UART command line via "picoc", works, just add additional commands, e.g. to do a SPI transaction, delay, etc.
 - add HTTPD server web pages, with forms to enter commands in Web Browser

@@ -1,3 +1,6 @@
+#ifndef __tftp_server_h__
+#define __tftp_server_h__
+
 // TFTP context containing callback functions for TFTP transfers
 struct tftp_context {
   void* (*open)(const char* fname, const char* mode, uint8_t write);
@@ -8,3 +11,4 @@ struct tftp_context {
 
 void tftp_init(const struct tftp_context* ctx);
 
+#endif

@@ -1,10 +1,14 @@
 // tftp server
 // 4 byte header, 512 byte data,  network byte order
 
-#include <NativeEthernet.h>
-#include <NativeEthernetUdp.h>
+//#include <NativeEthernet.h>
+//#include <NativeEthernetUdp.h>
+#include <QNEthernet.h>
+#include <QNEthernetUDP.h>
 #include <TeensyThreads.h>
 #include "tftp_server.h"
+
+using namespace qindesign::network;
 
 #define swap2 __builtin_bswap16
 
@@ -121,6 +125,12 @@ void recv() {
   char *mode = (char *)"binary";  // not used
 
   rlth = Udp.read(pin, sizeof(pktin));
+  //needed for QNEthernet
+  if ( ! rlth) {
+    threads.delay(10);
+    return;
+  }
+
   remote = Udp.remoteIP();
   port = Udp.remotePort();
   op = swap2(pktin[0]);
@@ -220,6 +230,7 @@ void recv() {
 
     default:
       send_error(remote, port, TFTP_ERROR_ILLEGAL_OPERATION, (char *)"Unknown operation");
+      Serial.print(op);
       break;
   }
 }

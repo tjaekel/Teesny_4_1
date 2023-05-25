@@ -1,10 +1,14 @@
 // fnet tftp
 
 #include <SD.h>
-#include <NativeEthernet.h>
-#include <NativeEthernetUdp.h>
+//#include <NativeEthernet.h>
+//#include <NativeEthernetUdp.h>
+#include <QNEthernet.h>
+#include <QNEthernetUDP.h>
 #include <TeensyThreads.h>
 #include "tftp_server.h"
+
+using namespace qindesign::network;
 
 File file;
 
@@ -90,14 +94,18 @@ void TFTP_setup() {
   }
   Serial.println("initialization done.");
 
+#if 0
+  //not on QNEthernet
   Ethernet.setStackHeap(1024 * 64);
   Ethernet.setSocketSize(1460 * 4); //Set buffer size
   Ethernet.setSocketNum(6); //Change number of allowed sockets to 6
+#endif
 
 #if 0
   //if not yet done by HTTP_server
   uint8_t mac[6];
   teensyMAC(mac);
+  //not on QNEthernet, just begin()
   Ethernet.begin(mac);
 #endif
   Serial.print("IP address: ");
