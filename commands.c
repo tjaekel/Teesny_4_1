@@ -459,7 +459,7 @@ void LibCpuReadSingle(struct ParseState *Parser, struct Value *ReturnValue, stru
 }
 #endif
 
-#if 0
+#if 1
 void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
     (void)Parser;
@@ -469,10 +469,12 @@ void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Va
     retVal = picoc_SpiTransaction(Param[0]->Val->NativePointer,
                                   Param[1]->Val->NativePointer,
                                   Param[2]->Val->Integer
-                                  );
+                                 );
     ReturnValue->Val->Integer = retVal;
 }
+#endif
 
+#if 0
 void LibI2CWrite(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
     (void)Parser;

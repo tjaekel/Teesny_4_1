@@ -786,7 +786,7 @@ const struct LibraryFunction CLibrary[] =
 
     /* extension for ReadMem and WriteMem */
 #if 1
-    { LibHelp,			"void CHelp();" },
+    { LibHelp,			    "void CHelp();" },
     { LibPicocRestart,  "void PicocRestart();" },
     //{ LibReadMem,		"unsigned long ReadMem(unsigned long);" },
     //{ LibWriteMem,	"void WriteMem(unsigned long,unsigned long);" },
@@ -797,18 +797,18 @@ const struct LibraryFunction CLibrary[] =
     { CmdMemShortPrint,	"void PShorts(void *,unsigned long);" },
     { CmdMemBytePrint,  "void PBytes(void *,unsigned long);" },
 #ifndef SAVE_SPACE		
-    { CmdWriteOMem,		"void PWriteOMem(unsigned short,unsigned short);" },					//no need: use WriteMem
-    { CmdFillMem,		"void FillMem(unsigned short,unsigned short,unsigned short);" },		//no need: use memset
-    { CmdCmpMem,		"int PCmpMem(unsigned short,unsigned short,unsigned short);" },
-    { CmdCpyMem,		"void MemCpy(unsigned short,unsigned short,unsigned short);" },			//no need: use memcmp
-    { CmdCheckRead,		"int PCheckRead(unsigned short,unsigned short,unsigned short);" },
-    { CmdCheckWrite,	"int PCheckWrite(unsigned short,unsigned short,unsigned short);" },
-    { CmdPoll,			"void Poll(unsigned short,unsigned short,unsigned short);" },
+    { CmdWriteOMem,		  "void PWriteOMem(unsigned short,unsigned short);" },					//no need: use WriteMem
+    { CmdFillMem,		    "void FillMem(unsigned short,unsigned short,unsigned short);" },		//no need: use memset
+    { CmdCmpMem,		    "int PCmpMem(unsigned short,unsigned short,unsigned short);" },
+    { CmdCpyMem,		    "void MemCpy(unsigned short,unsigned short,unsigned short);" },			//no need: use memcmp
+    { CmdCheckRead,		  "int PCheckRead(unsigned short,unsigned short,unsigned short);" },
+    { CmdCheckWrite,	  "int PCheckWrite(unsigned short,unsigned short,unsigned short);" },
+    { CmdPoll,			    "void Poll(unsigned short,unsigned short,unsigned short);" },
 #endif
 #ifdef WITH_SCRIPTS
     /* open a script file and process it */
-    { LibOpenScript,	"int RunScript(char *);" },
-    { LibGetExitVal,	"int ExitValue();" },
+    { LibOpenScript,	  "int RunScript(char *);" },
+    { LibGetExitVal,	  "int ExitValue();" },
 #endif
 #if 0
     { LibMsSleep,       "void mssleep(unsigned long);" },
@@ -826,9 +826,8 @@ const struct LibraryFunction CLibrary[] =
     { LibCpuWriteSingle,"void CPU_WRITE_SINGLE(unsigned long,unsigned long,int);" },
 #endif
 
-#if 0
     { LibSpiTrans,      "int SpiTransaction(unsigned char *,unsigned char *,int);" },
-
+#if 0
     { LibI2CRead,       "int I2CRead(unsigned char,unsigned char,unsigned char *,int,int);" },
     { LibI2CWrite,      "int I2CWrite(unsigned char,unsigned char *,int,int);" },
 

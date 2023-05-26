@@ -12,6 +12,7 @@
 #define SPLIT_MEM_THRESHOLD 16                      /* don't split memory which is close in size */
 
 EXTMEM unsigned char bottom_of_heap[HEAP_SIZE];
+EXTMEM unsigned char scriptBuf[SCRIPT_SIZE];
 #define  HeapMemory  bottom_of_heap
 void *HeapStart = &HeapMemory[0];
 /* static */ void *HeapBottom = &HeapMemory[HEAP_SIZE];   /* the bottom of the (downward-growing) heap */

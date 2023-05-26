@@ -20,8 +20,8 @@ ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out);
 
 ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out);
-#ifdef WITH_SDCARD
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results* res, EResultOut out);
+#ifdef WITH_SDCARD
 ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sdformat(TCMD_DEC_Results* res, EResultOut out);
 #endif
@@ -63,12 +63,12 @@ const TCMD_DEC_Command Commands[] = {
 				.help = (const char*)"print SD Card content",
 				.func = CMD_sddir
 		},
-#ifdef WITH_SDCARD
 		{
 				.cmd = (const char*)"sdprint",
 				.help = (const char*)"sdprint <fname> as text file",
 				.func = CMD_sdprint
 		},
+#ifdef WITH_SDCARD
 		{
 				.cmd = (const char*)"sdexec",
 				.help = (const char*)"sdexec <fname> execute as script file",
@@ -711,6 +711,13 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 {
 	pico_c_main_interactive(0, NULL);
+
+	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results *res, EResultOut out)
+{
+	SDCARD_PrintFile(res->str);
 
 	return CMD_DEC_OK;
 }

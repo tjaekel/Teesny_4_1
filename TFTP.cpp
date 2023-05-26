@@ -20,14 +20,18 @@ void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
   char  *f = (char *)"xx";
 
   nbytes = 0;
-  Serial.printf("opening %s  %d %d\r\n", fname, write, O_READ);
+  Serial.printf("opening %s %d %d\r\n", fname, write, O_READ);
   us = micros();
   if (write == 0) {
     Serial.println("opening for read");
     file = SD.open(fname);
   }
-  else file = SD.open(fname, FILE_WRITE);
-  if (file) Serial.println("opened");
+  else
+    file = SD.open(fname, /*FILE_WRITE*/ FILE_WRITE_BEGIN);
+  if (file) {
+    Serial.println("opened for write");
+    file.truncate();            //like: O_TRUNC
+  }
   else return NULL;
 
   return f;

@@ -8,11 +8,12 @@
 #include "picoc.h"
 #include "VCP_UART.h"
 #include "MEM_Pool.h"
+#include "SD_Card.h"
 
 //#include "cmsis_os.h"
 
 #ifdef WITH_SCRIPTS
-//#include "ff.h"
+extern unsigned char scriptBuf[SCRIPT_SIZE];
 #endif
 
 /* read a file into memory */
@@ -104,42 +105,14 @@ unsigned char *PlatformReadFile(const char *FileName)
 
 	return scriptBuf;
 #else
+  int l;
 	/* use SD Card to read a file with Pico-C statements */
-	/**
-	 * ATTENTION: we cannot use stack variables or SDRAM:
-	 * DMA from SDCard will not work, it times out
-	 * So, we allocate here memory - this works!
-	 */
-
-	FIL *MyFile;     			/* File object, should not be on stack (DTCM) */
-	unsigned char *scriptBuf;	/* buffer for the script - size is limited, access-able for DMA! */
-	unsigned int numRd;
-
-	MyFile = MEM_PoolAlloc(sizeof(FIL));
-	if ( ! MyFile)
-		return 0;
-	scriptBuf = MEM_PoolAlloc(MEM_POOL_SEG_SIZE);
-	if ( ! scriptBuf)
-	{
-		MEM_PoolFree(MyFile);
-		return 0;
-	}
-
-	if(f_open(MyFile, FileName, FA_READ) != FR_OK)
-		return 0;
-
-	f_read(MyFile, scriptBuf, MEM_POOL_SEG_SIZE -1, &numRd);
-	*(scriptBuf + numRd) = '\0';
-
-	f_close(MyFile);
-
-	MEM_PoolFree(MyFile);
-	MEM_PoolFree(scriptBuf);
-
-	if (numRd)
-		return scriptBuf;
-
-	return 0;
+  l = SDCARD_ReadFile(FileName, scriptBuf);
+  if (l) {
+    scriptBuf[l] = '\0';
+    return scriptBuf;
+  }
+	return NULL;
 #endif
 }
 
@@ -148,7 +121,6 @@ unsigned char *PlatformReadFile(const char *FileName)
 /* read and scan a file for definitions */
 void PlatformScanFile(const char *FileName)
 {
-#if 0
     unsigned char *SourceStr;
     unsigned char *OrigCleanupText;
 	  long strLen;
@@ -158,17 +130,18 @@ void PlatformScanFile(const char *FileName)
     {
     	OrigCleanupText = CleanupText;
     	if (CleanupText == NULL)
-        {
+      {
     		CleanupText = SourceStr;
-        }
+      }
 
-		strLen = strlen((char *)SourceStr);
+		  strLen = strlen((char *)SourceStr);
     	Parse(FileName, (char *)SourceStr, strLen, TRUE);
 
     	if (OrigCleanupText == NULL)
+      {
     		CleanupText = NULL;
+      }
     }
-#endif
 }
 
 /* mark where to end the program for platforms which require this */

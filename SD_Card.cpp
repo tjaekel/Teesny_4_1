@@ -1,5 +1,5 @@
 
-
+#include <SD.h>
 #include "SD_Card.h"
 
 // change this to match your SD shield or module;
@@ -94,4 +94,52 @@ static void printTime(const DateTimeFields tm) {
   Serial.print(tm.mday);
   Serial.print(", ");
   Serial.print(tm.year + 1900);
+}
+
+int SDCARD_PrintFile(char *file) {
+  if ( ! SDCARD_init)
+    return 0;           //not initialized
+
+  // open the file.
+  File dataFile = SD.open(file);
+
+  // if the file is available, read from it and print:
+  if (dataFile) {
+    while (dataFile.available()) {
+      Serial.write(dataFile.read());
+    }
+    dataFile.close();
+    return 1;
+  }  
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.print("error opening ");
+    Serial.println(file);
+    return 0;
+  }
+}
+
+int SDCARD_ReadFile(const char *file, unsigned char *b) {
+  int i = 0;
+  if ( ! SDCARD_init)
+    return 0;           //not initialized
+
+  // open the file.
+  File dataFile = SD.open(file);
+
+  // if the file is available, read from it and store:
+  if (dataFile) {
+    while (dataFile.available()) {
+      *b++ = (unsigned char)dataFile.read();
+      i++;
+    }
+    dataFile.close();
+    return i;
+  }  
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.print("error opening ");
+    Serial.println(file);
+    return 0;
+  }
 }

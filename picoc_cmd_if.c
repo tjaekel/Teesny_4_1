@@ -11,6 +11,7 @@
 //#include "I2C3_user.h"
 #include "picoc.h"
 //#include <cmsis_os2.h>
+#include "MEM_Pool.h"
 
 static int sPicoC_Stopped = 0;
 
@@ -61,10 +62,36 @@ int picoc_ExecuteCommand(char *s)
     return 0;
 }
 
-#if 0
+#if 1
 int picoc_SpiTransaction(unsigned char *tx, unsigned char *rx, int bytes)
 {
-	return SPI_TransmitReceive(tx, rx, bytes);
+  /* ATTENTION:
+   * our Pico-C scripts, with buffers, variables ... are located on EXTMEM!
+   * a SPI DMA to/from there is not possible!
+   * we need a temporary buffer just for the SPI_transaction
+   */
+  unsigned char *SPItx;
+  unsigned char *SPIrx;
+  int r;
+
+  SPItx = (unsigned char *)MEM_PoolAlloc(bytes);
+  if ( ! SPItx)
+    return 0;
+  SPIrx = (unsigned char *)MEM_PoolAlloc(bytes);
+  if ( ! SPIrx) {
+    MEM_PoolFree(SPItx);
+    return 0;
+  }
+
+  memcpy(SPItx, tx, bytes);
+  //memset(SPIrx, 0, bytes);      //just to avoid warning
+	r = SPI_transaction(0, SPItx, SPIrx, bytes);
+  memcpy(rx, SPIrx, 10);
+
+  MEM_PoolFree(SPItx);
+  MEM_PoolFree(SPIrx);
+  
+  return r;
 }
 #endif
 

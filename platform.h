@@ -24,16 +24,18 @@
 
 #define PlatformSetExitPoint() setjmp(ExitBuf)
 
-#define SDRAM_SIZE_BYTES      (1024 * 8)
+#define SCRIPT_SIZE_BYTES     (1024 * 8)        //size for scripts to load and parse
+#define SDRAM_SIZE_BYTES      ((1024 * 1024 * 8) - SCRIPT_SIZE_BYTES) //check, how much EXTMEM is available!
 
-#define HEAP_SIZE (SDRAM_SIZE_BYTES)			/* space for the heap and the stack, minimal >2K */
+#define HEAP_SIZE   (SDRAM_SIZE_BYTES)			/* space for the heap and the stack, minimal >2K */
+#define SCRIPT_SIZE (SCRIPT_SIZE_BYTES)     /* space for scripts from SD card file */
 
 // # include <stdio.h>				/* fflush, stdout, fgets, stdin, getchar, putchar */
-# include "printf.h"
-# include <stdlib.h>				/* malloc, free, exit, calloc, realloc */
-# include <ctype.h>					/* isalnum, isspace, isalpha, isdigit */
-# include <string.h>				/* memcpy, strlen, memset, strcpy, strncmp, strncpy */
-# include <assert.h>				/* assert */
+#include "printf.h"
+#include <stdlib.h>				/* malloc, free, exit, calloc, realloc */
+#include <ctype.h>					/* isalnum, isspace, isalpha, isdigit */
+#include <string.h>				/* memcpy, strlen, memset, strcpy, strncmp, strncpy */
+#include <assert.h>				/* assert */
 //# include <sys/types.h>			/* not really needed */
 
 #ifndef WITHOUT_SYSSTAT_H
@@ -41,16 +43,16 @@
 #endif
 
 //# include <unistd.h>				/* not found, not needed */
-# include <stdarg.h>				/* needed for va_start, va_end, va_arg */
-# include <setjmp.h>				/* jump_buf, set_jmp, longjmp */
-# ifndef NO_FP						/* with or without Floating Point */
+#include <stdarg.h>				/* needed for va_start, va_end, va_arg */
+#include <setjmp.h>				/* jump_buf, set_jmp, longjmp */
+#ifndef NO_FP						/* with or without Floating Point */
 /* defines for the optional "fdlibm" maths library */
-#  define _IEEE_LIBM
-#  include <math.h>
+#define _IEEE_LIBM
+#include <math.h>
 /*#  define PICOC_MATH_LIBRARY*/
 /*#  define NEED_MATH_LIBRARY*/
-#  undef BIG_ENDIAN
-# endif
+#undef BIG_ENDIAN
+#endif
 
 typedef unsigned long	PTR_TYPE_INT;
 

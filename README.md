@@ -5,9 +5,10 @@
 - USB VCP UART shell (for interactive commands)
 - SPI master, with "spiclk" and "rawspi" commands (change speed, send any SPI transaction via command line)
 - use SPI in DMA mode (fastest speed on SPI possible)
-- ETH HTTPD server - up and running running
+- ETH HTTPD server - up and running (port 80 and 8080, 2x)
 - code to run SPI also as slave (compile option)
 - initialize and use SD Card (from command line)
+- start TFTP from command line
 
 ## Work Items
 - add TFTP to/from SD Card via ETH - DONE<br>
@@ -19,4 +20,8 @@
   (no need for Telnet)<br>
   use QNEthernet and AsyncWebServer: two instances (port 80 and 8080) are working in parallel - DONE
 - a second SPI, a shared SPI (same bus with two PCS/SS signals)
+
+## Issues
+- 2x AsyncWebServer plus TFTP activated - it seems to crash after a while (half an hour):<br>
+  the MCU reboots
 

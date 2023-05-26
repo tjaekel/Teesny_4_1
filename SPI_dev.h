@@ -18,8 +18,17 @@
 #endif
 
 void SPI_setup(void);
+
+int  SPI_setClock(int clkspeed);
+
+/* used also by Pico-C as C code */
+#ifdef __cplusplus
+extern "C" {
+#endif
 int  SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len);
-int SPI_setClock(int clkspeed);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

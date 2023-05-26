@@ -5,7 +5,6 @@
  *  Author: tjaekel
  */ 
 
-
 #ifndef PICOC_H_
 #define PICOC_H_
 
@@ -23,12 +22,12 @@ extern "C" {
 #define NO_REALLOC
 #undef  NO_STRING_FUNCTIONS
 #undef  USE_PLATFORM_LIB
-#undef 	NO_HASH_INCLUDE			//we do not support #include
+#undef 	NO_HASH_INCLUDE			  //we do not support #include
 #undef  PICOC_MATH_LIBRARY		//compile errors with math library
 #undef  DEBUG_LEXER
 #undef  DEBUG_HEAP
 #define WITHOUT_SYSSTAT_H
-//#define WITH_SCRIPTS			//send and execute scripts via TeraTerm - broken
+#define WITH_SCRIPTS			//send and execute scripts via TeraTerm - broken
 #define SAVE_SPACE				//minimal functions defined
 ////#define FANCY_ERROR_REPORTING
 
