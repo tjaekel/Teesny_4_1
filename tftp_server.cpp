@@ -1,8 +1,6 @@
 // tftp server
 // 4 byte header, 512 byte data,  network byte order
 
-//#include <NativeEthernet.h>
-//#include <NativeEthernetUdp.h>
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
 #include <TeensyThreads.h>
@@ -106,8 +104,7 @@ void send_data() {
   pktout[1] = swap2(tftp_state.blknum);
   ret = tftp_state.ctx->read(tftp_state.handle, pbufout, TFTP_MAX_PAYLOAD_SIZE);
   if (ret < 0) {
-    //send_error(&tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Error occured while reading the file.");
-    send_error(tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Error occured while reading the file.");
+    send_error(tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Error occured while reading file");
     close_connection();
     return;
   }
@@ -142,7 +139,7 @@ void recv() {
     case TFTP_WRQ:
       {
         if (tftp_state.handle != NULL) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Only one connection at a time is supported");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Only one connection is supported");
           break;
         }
         char *filename = (char *)&pktin[1];
@@ -151,7 +148,7 @@ void recv() {
         tftp_state.blknum = 1;
 
         if (!tftp_state.handle) {
-          send_error(remote, port, TFTP_ERROR_FILE_NOT_FOUND, (char *)"Unable to open requested file.");
+          send_error(remote, port, TFTP_ERROR_FILE_NOT_FOUND, (char *)"*E: Unable to open file");
           break;
         }
 
@@ -174,17 +171,17 @@ void recv() {
     case TFTP_ACK:
       {
         if (tftp_state.handle == NULL) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"No connection");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: No connection");
           break;
         }
 
         if (tftp_state.mode_write != 0) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Not a read connection");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Not a read connection");
           break;
         }
 
         if (blk != tftp_state.blknum) {
-          send_error(remote, port, TFTP_ERROR_UNKNOWN_TRFR_ID, (char *)"Wrong block number");
+          send_error(remote, port, TFTP_ERROR_UNKNOWN_TRFR_ID, (char *)"*E: wrong block number");
           break;
         }
 
@@ -205,18 +202,18 @@ void recv() {
     case TFTP_DATA:
       {
         if (tftp_state.handle == NULL) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"No connection");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: No connection");
           break;
         }
 
         if (tftp_state.mode_write != 1) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"Not a write connection");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Not a write connection");
           break;
         }
 
         int ret = tftp_state.ctx->write(tftp_state.handle, pbufin, rlth - TFTP_HEADER_LENGTH);
         if (ret < 0) {
-          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"error writing file");
+          send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Error writing file");
           close_connection();
         } else {
           send_ack(blk);
@@ -229,12 +226,14 @@ void recv() {
       }
 
     default:
-      send_error(remote, port, TFTP_ERROR_ILLEGAL_OPERATION, (char *)"Unknown operation");
+      send_error(remote, port, TFTP_ERROR_ILLEGAL_OPERATION, (char *)"*E: Unknown operation");
       Serial.print(op);
       break;
   }
 }
 
+#if 0
+//if not as thread
 void tftp_init(const struct tftp_context *ctx)
 {
   tftp_state.handle    = NULL;
@@ -243,6 +242,7 @@ void tftp_init(const struct tftp_context *ctx)
   tftp_state.timer     = 0;
 
   Udp.begin(TFTP_PORT);
+
   while (1) {
     if (Udp.parsePacket()) recv();
     uint32_t ms = millis();
@@ -260,6 +260,7 @@ void tftp_init(const struct tftp_context *ctx)
     }
   }
 }
+#endif
 
 extern /*const*/ tftp_context tftp_ctx;
 
@@ -270,6 +271,7 @@ void tftp_thread(void) {
   tftp_state.timer     = 0;
 
   Udp.begin(TFTP_PORT);
+
   while (1) {
     if (Udp.parsePacket())
       recv();
@@ -291,4 +293,8 @@ void tftp_thread(void) {
     }
     threads.yield();
   }
+}
+
+void tftp_kill(void) {
+  Udp.stop();
 }

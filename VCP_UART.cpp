@@ -1,6 +1,3 @@
-// 
-// 
-// 
 
 #include "VCP_UART.h"
 
@@ -11,8 +8,7 @@ char XPrintBuf[XPRINT_LEN];
 
 void VCP_UART_setup(void)
 {
-	Serial.begin(9600);
-    //while (!Serial);          // wait, until host terminal avaialble
+	Serial.begin(1843200);                        //baudrate does not matter: VCP UART via USB
 }
 
 char* VCP_UART_getString(void)
@@ -79,7 +75,6 @@ void VCP_UART_hexDump(unsigned char* b, int len) {
 }
 
 void UART_printString(const char *s, EResultOut out) {
-  ////Serial.print(s);
   while (*s)
     Serial.print(*s++);
 }
@@ -145,7 +140,6 @@ int UART_getChar(void) {
 }
 
 void UART_putChar(unsigned char c) {
-  //Serial.print((char)c);
   Serial.write(c);
   if (c == '\n')
     Serial.write('\r');

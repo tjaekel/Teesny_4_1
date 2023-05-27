@@ -20,7 +20,7 @@ void SDCARD_setup(void) {
     //Serial.print("Initializing SD card...");
 
     if (!SD.begin(chipSelect)) {
-      Serial.println("initialization failed!");
+      Serial.println("*E: SD initialization failed");
       return;
     }
     //Serial.println("initialization done.");
@@ -113,7 +113,7 @@ int SDCARD_PrintFile(char *file) {
   }  
   // if the file isn't open, pop up an error:
   else {
-    Serial.print("error opening ");
+    Serial.print("*E: error opening file");
     Serial.println(file);
     return 0;
   }
@@ -138,7 +138,7 @@ int SDCARD_ReadFile(const char *file, unsigned char *b) {
   }  
   // if the file isn't open, pop up an error:
   else {
-    Serial.print("error opening ");
+    Serial.print("*E: error opening file");
     Serial.println(file);
     return 0;
   }

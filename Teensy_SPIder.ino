@@ -1,7 +1,7 @@
 /*
  Name:		Teensy_SPIder.ino
  Created:	5/5/2023 12:21:04 PM
- Author:	tj
+ Author:	tj (tjaekel, Torsten Jaekel)
 */
 
 #include "SPI_dev.h"
@@ -12,16 +12,7 @@
 #include "SYS_config.h"
 #include "TFTP.h"
 #include "MEM_Pool.h"
-
-char* UARTcmd = NULL;
-
-#if 0
-//LED cannot be used anymore if we use SPI (SCK becomes the same pin)
-const int ledPin = LED_BUILTIN;  // the number of the LED pin
-int ledState = LOW;  // ledState used to set the LED
-unsigned long previousMillis = 0;   // will store last time LED was updated
-const long interval = 200;          // interval at which to blink (milliseconds)
-#endif
+#include "CMD_thread.h"
 
 /* test external PSRAM */
 #if 0
@@ -29,22 +20,22 @@ EXTMEM unsigned char psiRAM[40];
 extern "C" uint8_t external_psram_size;
 #endif
 
-////unsigned char SPIbufTx[20];
-////unsigned char SPIbufRx[20];
-
-void setup() {
+void setup(void) {
     // set the digital pin as output:
     ////pinMode(ledPin, OUTPUT);
 
     Serial.begin(115200);       //baudrate does not matter: it is VCP UART, any baudrate works
+
+    
 #if 1
+    //optional: wait for UART available - to see all early messages
     while (!Serial) {}
-    delay(200);
+
+    if (CrashReport)
+      Serial.print(CrashReport);
 #endif
 
     CFG_Read();
-
-    ////TFTP_setup();
 
     VCP_UART_setup();
 
@@ -65,6 +56,7 @@ void loop() {
     unsigned long currentMillis = millis();
 #endif
 
+    //do it once here, after setup() was completed, otherwise too early
     if ( ! firstLoop) {
         if (Serial) {
             //wait for host terminal connected
@@ -74,8 +66,6 @@ void loop() {
         }
     }
 
-    UARTcmd = VCP_UART_getString();
-    if (UARTcmd) {
 #if 0
         //PSRAM test
         {
@@ -95,10 +85,8 @@ void loop() {
             }
         }
 #else
-      CMD_DEC_execute(UARTcmd, UART_OUT);
-      VCP_UART_printPrompt();
+      CMD_Thread();
 #endif
-    }
 
 #if 0
     if (currentMillis - previousMillis >= interval) {

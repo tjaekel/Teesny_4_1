@@ -1,8 +1,5 @@
-// fnet tftp
 
 #include <SD.h>
-//#include <NativeEthernet.h>
-//#include <NativeEthernetUdp.h>
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
 #include <TeensyThreads.h>
@@ -10,6 +7,7 @@
 
 using namespace qindesign::network;
 
+int TFTPid  = 0;
 File file;
 
 // file interface
@@ -17,31 +15,32 @@ static uint32_t nbytes, us;
 
 void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
 {
-  char  *f = (char *)"xx";
+  ////char  *f = (char *)"xx";      /WHO is doing such crab?
 
   nbytes = 0;
-  Serial.printf("opening %s %d %d\r\n", fname, write, O_READ);
+  ////Serial.printf("*I: opening %s %d %d\r\n", fname, write, O_READ);
   us = micros();
   if (write == 0) {
-    Serial.println("opening for read");
+    ////Serial.println("*I: opening for read");
     file = SD.open(fname);
   }
   else
     file = SD.open(fname, /*FILE_WRITE*/ FILE_WRITE_BEGIN);
   if (file) {
-    Serial.println("opened for write");
+    ////Serial.println("*I: opened for write");
     file.truncate();            //like: O_TRUNC
   }
   else return NULL;
 
-  return f;
+  //return f;
+  return (void *)fname;
 }
 
 void tftp_fs_close(void *handle)
 {
   us = micros() - us;
   file.close();
-  Serial.printf("closed %d bytes %d us\r\n", nbytes, us);
+  ////Serial.printf("*I: closed %d bytes %d us\r\n", nbytes, us);
 }
 
 int tftp_fs_read(void *handle, void *buf, int bytes)
@@ -52,7 +51,7 @@ int tftp_fs_read(void *handle, void *buf, int bytes)
   if (file.available()) {
     ret = file.read((uint8_t*)buf, bytes);
     nbytes += ret;
-    // Serial.printf("read  %d %d\n", bytes, ret);
+    // Serial.printf("*I: read  %d %d\n", bytes, ret);
   }
   return ret;
 }
@@ -84,26 +83,18 @@ extern void tftp_thread(void);
 /*const*/ tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };
 
 void TFTP_setup() {
-  //static const tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };
 #if 0
   Serial.begin(9600);
   while (!Serial);
   delay(100);
 #endif
-  Serial.print("Initializing SD card...");
+  ////Serial.print("*I: Initializing SD card...");
 
   if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("initialization failed!");
+    Serial.println("*E: SD card failed");
     return;
   }
-  Serial.println("initialization done.");
-
-#if 0
-  //not on QNEthernet
-  Ethernet.setStackHeap(1024 * 64);
-  Ethernet.setSocketSize(1460 * 4); //Set buffer size
-  Ethernet.setSocketNum(6); //Change number of allowed sockets to 6
-#endif
+  ////Serial.println("initialization done");
 
 #if 0
   //if not yet done by HTTP_server
@@ -112,9 +103,20 @@ void TFTP_setup() {
   //not on QNEthernet, just begin()
   Ethernet.begin(mac);
 #endif
-  Serial.print("IP address: ");
+  Serial.print("*I: IP address: ");
   Serial.println(Ethernet.localIP());
 
-  //tftp_init(&tftp_ctx);
-  threads.addThread(tftp_thread);
+  ////tftp_init(&tftp_ctx);     //not as thread
+  TFTPid = threads.addThread(tftp_thread);
+}
+
+void TFTP_kill(void) {
+  if (TFTPid) {
+    threads.kill(TFTPid);
+
+    //close UDP socket? - it should stop on next Udp.begin()
+    tftp_kill();
+    TFTPid = 0;
+  }
+
 }

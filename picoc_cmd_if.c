@@ -4,6 +4,9 @@
  *  Created on: Aug 19, 2022
  *      Author: tj
  */
+
+//#include <TeensyThreads.h>      //fails - not possible in C-code file!
+
 #include "VCP_UART.h"
 #include "cmd_dec.h"
 //#include "GPIO_user.h"
@@ -51,7 +54,7 @@ int picoc_CheckForAbort(void)
 #if 0
 void picoc_MsSleep(unsigned long ms)
 {
-	osDelay(ms);
+	threads.delay(ms);
 }
 #endif
 

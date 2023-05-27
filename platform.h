@@ -24,8 +24,8 @@
 
 #define PlatformSetExitPoint() setjmp(ExitBuf)
 
-#define SCRIPT_SIZE_BYTES     (1024 * 8)        //size for scripts to load and parse
-#define SDRAM_SIZE_BYTES      ((1024 * 1024 * 8) - SCRIPT_SIZE_BYTES) //check, how much EXTMEM is available!
+#define SCRIPT_SIZE_BYTES     (1024 * 8)                                      //size for scripts to load and parse
+#define SDRAM_SIZE_BYTES      ((1024 * 1024 * (8 + 8)) - SCRIPT_SIZE_BYTES)   //check, how much EXTMEM is available!
 
 #define HEAP_SIZE   (SDRAM_SIZE_BYTES)			/* space for the heap and the stack, minimal >2K */
 #define SCRIPT_SIZE (SCRIPT_SIZE_BYTES)     /* space for scripts from SD card file */

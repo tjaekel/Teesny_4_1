@@ -10,5 +10,6 @@ struct tftp_context {
 };
 
 void tftp_init(const struct tftp_context* ctx);
+void tftp_kill(void);
 
 #endif

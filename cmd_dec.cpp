@@ -115,7 +115,7 @@ const TCMD_DEC_Command Commands[] = {
 		},
     {
 				.cmd = (const char*)"tftp",
-				.help = (const char*)"start TFTP server",
+				.help = (const char*)"start/stop TFTP server [1|0]",
 				.func = CMD_tftp
 		},
     {
@@ -692,7 +692,10 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
 }
 
 ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out) {
-  TFTP_setup();
+  if (res->val[0])
+    TFTP_setup();
+  else
+    TFTP_kill();
 
   return CMD_DEC_OK;
 }
