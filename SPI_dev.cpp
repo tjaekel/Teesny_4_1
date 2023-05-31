@@ -10,7 +10,7 @@
 #endif
 
 uint32_t SPIClkSpeed = 16000000;
-const int ssPin = 10;    //SPI = 10; SPI1 = 0
+const int ssPin = 10;    //SPI = 10; SPI1 = 0, pin 13 is LED and SPI SCLK!
 SPISettings SPIsettings(16000000, LSBFIRST, SPI_MODE3);
 
 void SPI_setup(void) {

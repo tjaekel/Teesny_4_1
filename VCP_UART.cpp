@@ -1,5 +1,10 @@
 
 #include "VCP_UART.h"
+#include <TeensyThreads.h>
+
+/* marked as experimental but we need */
+ThreadWrap(Serial, SerialXtra);
+#define Serial ThreadClone(SerialXtra)
 
 static char UARTbuffer[80];
 static size_t numAvail = 0;
@@ -8,7 +13,7 @@ char XPrintBuf[XPRINT_LEN];
 
 void VCP_UART_setup(void)
 {
-	Serial.begin(1843200);                        //baudrate does not matter: VCP UART via USB
+	////Serial.begin(1843200);                        //baudrate does not matter: VCP UART via USB
 }
 
 char* VCP_UART_getString(void)
@@ -55,6 +60,8 @@ char* VCP_UART_getString(void)
         }
     }
 
+    threads.delay(1);
+    ////threads.yield();
     return NULL;
 }
 
@@ -127,6 +134,8 @@ int UART_getString(unsigned char *b, size_t l)
         }
     }
 
+    threads.delay(1);
+    ////threads.yield();
     return 0;
 }
 
@@ -135,7 +144,8 @@ int UART_getChar(void) {
     if (Serial.available() > 0) {
       return Serial.read();
     }
-    delay(10);
+    threads.delay(1);
+    ////threads.yield();
   }
 }
 

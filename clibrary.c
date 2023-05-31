@@ -7,6 +7,7 @@
 
 #include "picoc.h"
 #include "picoc_commands.h"
+#include "CMD_thread.h"
 
 #ifdef DV_SIM
 #include "amba_access.h"
@@ -722,9 +723,34 @@ void LibMemcmp(struct ParseState *Parser, struct Value *ReturnValue, struct Valu
 }
 #endif
 
-void LibHelp(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+void LibMsSleep(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Parser;
+    (void)NumArgs;
 
-/* list of all library functions and their prototypes */
+    CMD_delay(Param[0]->Val->Integer);
+}
+
+void LibHelp(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Param;
+    (void)Parser;
+    (void)ReturnValue;
+    (void)NumArgs;
+
+    const struct LibraryFunction *p;
+    p = CLibrary;
+#ifndef SAVE_SPACE
+    PlatformPrintf("Help - available functions:\n");
+#endif
+    while (p->Func)
+    {
+		PlatformPrintf("  %s\n", p->Prototype);
+		p++;
+    }
+}
+
+/* ---- list of all library functions and their prototypes ---- */
 const struct LibraryFunction CLibrary[] =
 {
 #if 1
@@ -810,7 +836,7 @@ const struct LibraryFunction CLibrary[] =
     { LibOpenScript,	  "int RunScript(char *);" },
     { LibGetExitVal,	  "int ExitValue();" },
 #endif
-#if 0
+#if 1
     { LibMsSleep,       "void mssleep(unsigned long);" },
 #endif
 #if 0
@@ -847,22 +873,3 @@ const struct LibraryFunction CLibrary[] =
 
     { NULL,             NULL }
 };
-
-void LibHelp(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
-{
-    (void)Param;
-    (void)Parser;
-    (void)ReturnValue;
-    (void)NumArgs;
-
-    const struct LibraryFunction *p;
-    p = CLibrary;
-#ifndef SAVE_SPACE
-    PlatformPrintf("Help - available functions:\n");
-#endif
-    while (p->Func)
-    {
-		PlatformPrintf("  %s\n", p->Prototype);
-		p++;
-    }
-}

@@ -7,6 +7,7 @@
 #include "MEM_Pool.h"
 #include "cmd_dec.h"
 #include "debug_sys.h"
+#include "CMD_thread.h"
 
 #include "SPI_dev.h"
 #include "SD_Card.h"
@@ -42,6 +43,8 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
 
+ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
+
 const TCMD_DEC_Command Commands[] = {
 		{
 				.cmd = (const char *)"help",
@@ -52,6 +55,11 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char *)"print",
 				.help = (const char *)"print [-n] [rest of cmd]",
 				.func = CMD_print
+		},
+    {
+				.cmd = (const char *)"delay",
+				.help = (const char *)"delay [ms]",
+				.func = CMD_delay
 		},
     {
 				.cmd = (const char*)"sdinit",
@@ -523,6 +531,14 @@ ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out)
 		UART_Send((const char *)"\r\n", 2, out);
 
 	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out)
+{
+  if (res->val[0])
+    CMD_delay((int)res->val[0]);
+
+  return CMD_DEC_OK;
 }
 
 #ifdef WITH_SDCARD

@@ -36,11 +36,11 @@ AsyncWebServer    server2(8080);
 
 int reqCount = 0;                // number of requests received
 
-const int led = 13;
+////const int led = 13;
 
 void handleRoot(AsyncWebServerRequest *request)
 {
-  digitalWrite(led, 1);
+  ////digitalWrite(led, 1);
 
 #define BUFFER_SIZE     400
 
@@ -69,12 +69,12 @@ body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Col
 
   request->send(200, "text/html", temp);
 
-  digitalWrite(led, 0);
+  ////digitalWrite(led, 0);
 }
 
 void handleNotFound(AsyncWebServerRequest *request)
 {
-  digitalWrite(led, 1);
+  ////digitalWrite(led, 1);
   String message = "File Not Found\n\n";
 
   message += "URI: ";
@@ -91,7 +91,7 @@ void handleNotFound(AsyncWebServerRequest *request)
   }
 
   request->send(404, "text/plain", message);
-  digitalWrite(led, 0);
+  ////digitalWrite(led, 0);
 }
 
 void drawGraph(AsyncWebServerRequest *request)

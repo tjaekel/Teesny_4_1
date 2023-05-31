@@ -107,7 +107,7 @@ void TFTP_setup() {
   Serial.println(Ethernet.localIP());
 
   ////tftp_init(&tftp_ctx);     //not as thread
-  TFTPid = threads.addThread(tftp_thread);
+  TFTPid = threads.addThread(tftp_thread, 0, 2048);
 }
 
 void TFTP_kill(void) {

@@ -1,6 +1,7 @@
 /*
  Name:		Teensy_SPIder.ino
  Created:	5/5/2023 12:21:04 PM
+ Updated: 5/31/2023
  Author:	tj (tjaekel, Torsten Jaekel)
 */
 
@@ -14,19 +15,25 @@
 #include "MEM_Pool.h"
 #include "CMD_thread.h"
 
+/* use LED as DEBUG to see if loop() is called and still running */
+//#define LED_DEBUG           /* instead of SPI - toggle LED, SPI unusable! LED conflicts with SPI SCLK */
+
 /* test external PSRAM */
 #if 0
 EXTMEM unsigned char psiRAM[40];
 extern "C" uint8_t external_psram_size;
 #endif
 
+uint8_t ledPin = 13;
+
 void setup(void) {
-    // set the digital pin as output:
-    ////pinMode(ledPin, OUTPUT);
+#ifdef LED_DEBUG
+    // set the digital pin as output: conflicts with SPI SCLK
+    pinMode(ledPin, OUTPUT);
+#endif
 
     Serial.begin(115200);       //baudrate does not matter: it is VCP UART, any baudrate works
 
-    
 #if 1
     //optional: wait for UART available - to see all early messages
     while (!Serial) {}
@@ -41,30 +48,27 @@ void setup(void) {
 
     HTTPD_setup();
 
+#ifndef LED_DEBUG
     SPI_setup();
+#endif
 
     MEM_PoolInit();
 
 #if 0
     memset(psiRAM, 0x56, sizeof(psiRAM));
 #endif
+
+    CMD_setup();              //launch CMD interpreter as a thread
 }
 
 void loop() {
-    static int firstLoop = 0;
-#if 0
-    unsigned long currentMillis = millis();
-#endif
 
-    //do it once here, after setup() was completed, otherwise too early
-    if ( ! firstLoop) {
-        if (Serial) {
-            //wait for host terminal connected
-            VCP_UART_putString("---- Teensy FW: V1.0.0 ----");
-            VCP_UART_printPrompt();
-            firstLoop = 1;
-        }
-    }
+#ifdef LED_DEBUG
+    #define LED_INTERVAL 1000
+    static unsigned long currentMillis = millis();
+    static unsigned long previousMillis = millis();
+    static int ledState = LOW;
+#endif
 
 #if 0
         //PSRAM test
@@ -84,12 +88,11 @@ void loop() {
                 VCP_UART_putString("\r\n");
             }
         }
-#else
-      CMD_Thread();
 #endif
 
-#if 0
-    if (currentMillis - previousMillis >= interval) {
+#ifdef LED_DEBUG
+    currentMillis = millis();
+    if (currentMillis - previousMillis >= LED_INTERVAL) {
         // save the last time you blinked the LED
         previousMillis = currentMillis;
 
@@ -104,5 +107,7 @@ void loop() {
         // set the LED with the ledState of the variable:
         digitalWrite(ledPin, ledState);
     }
+#else
+    delay(1000);
 #endif
 }

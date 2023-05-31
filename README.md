@@ -17,16 +17,14 @@
   change tftp_server to QNEthernet - DONE
 - add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
   activate from UART command line via "picoc", works, just add additional commands, e.g. to do a SPI transaction, delay, etc.<br>
-  ATT: when "tftp 1" is running - Pico-C does not work! (crash)
 - add HTTPD server web pages, with forms to enter commands in Web Browser
   (no need for Telnet)<br>
   use QNEthernet and AsyncWebServer: two instances (port 80 and 8080) are working in parallel - DONE
 - a second SPI, a shared SPI (same bus with two PCS/SS signals)
 
 ## Issues
-- the use of threads, e.g. via TeensyThreads - does not work (it crashes)
-- we need all as non-blocking "threads" done in loop() (but TFTP is still a
-  real thread, but it seems to create conflicst)
+- we use TeensyThreads: CMD interpreter (with Pico-C) as thread, TFTP as thread - increase default stack size
+- it is not very reliable: sometimes HTTP traffic stops, sometimes it crashes with report, sometimes it hangs (e.g. on Pico-C command line)
 
 ## Pico-C needs EXTMEM
 ATTENTION: the Pico-C "picoc" uses the external QSPI memory (not flash, as RAM)<br>
