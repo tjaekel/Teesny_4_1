@@ -1,5 +1,6 @@
 
 #include <SD.h>
+#include "VCP_UART.h"
 #include "SD_Card.h"
 
 // change this to match your SD shield or module;
@@ -12,31 +13,28 @@ const int chipSelect = BUILTIN_SDCARD;
 
 int SDCARD_init = 0;
 
-static void printSpaces(int num);
+static void printSpaces(int num, EResultOut out);
+#if 0
 static void printTime(const DateTimeFields tm);
+#endif
 
-void SDCARD_setup(void) {
+void SDCARD_setup(EResultOut out) {
   if ( ! SDCARD_init) {
-    //Serial.print("Initializing SD card...");
-
     if (!SD.begin(chipSelect)) {
-      Serial.println("*E: SD initialization failed");
+      UART_printString("*E: SD initialization failed", out);
       return;
     }
-    //Serial.println("initialization done.");
     SDCARD_init = 1;
   }
 
-  SDCARD_printDirectory("/", 0);
-  
-  //Serial.println("done!");
+  SDCARD_printDirectory("/", 0, out);
 }
 void SDCARD_deinit(void) {
   ////SD.end();//does not exist!
   SDCARD_init = 0;
 }
 
-void SDCARD_printDirectory(const char *str, int numSpaces) {
+void SDCARD_printDirectory(const char *str, int numSpaces, EResultOut out) {
   File dir = SD.open(str);
 
   if ( ! SDCARD_init)
@@ -45,15 +43,15 @@ void SDCARD_printDirectory(const char *str, int numSpaces) {
    while(true) {
      File entry = dir.openNextFile();
      if (! entry) {
-       //Serial.println("** no more files **");
        break;
      }
-     printSpaces(numSpaces);
-     Serial.print(entry.name());
+     printSpaces(numSpaces, out);
+     UART_printString(entry.name(), out);
      if (entry.isDirectory()) {
-       Serial.println("/");
-       SDCARD_printDirectory(entry.name(), numSpaces+2);
+       UART_printString("/\r\n", out);
+       SDCARD_printDirectory(entry.name(), numSpaces+2, out);
      } else {
+#if 0
        // files have sizes, directories do not
        int n = log10f(entry.size());
        if (n < 0) n = 10;
@@ -66,18 +64,20 @@ void SDCARD_printDirectory(const char *str, int numSpaces) {
          printSpaces(4);
          printTime(datetime);
        }
-       Serial.println();
+#endif
+       UART_printString("\r\n", out);
      }
      entry.close();
    }
 }
 
-static void printSpaces(int num) {
+static void printSpaces(int num, EResultOut out) {
   for (int i=0; i < num; i++) {
-    Serial.print(" ");
+    UART_printChar(' ', out);
   }
 }
 
+#if 0
 static void printTime(const DateTimeFields tm) {
   const char *months[12] = {
     "January","February","March","April","May","June",
@@ -95,8 +95,9 @@ static void printTime(const DateTimeFields tm) {
   Serial.print(", ");
   Serial.print(tm.year + 1900);
 }
+#endif
 
-int SDCARD_PrintFile(char *file) {
+int SDCARD_PrintFile(char *file, EResultOut out) {
   if ( ! SDCARD_init)
     return 0;           //not initialized
 
@@ -106,15 +107,15 @@ int SDCARD_PrintFile(char *file) {
   // if the file is available, read from it and print:
   if (dataFile) {
     while (dataFile.available()) {
-      Serial.write(dataFile.read());
+      UART_printChar((char)dataFile.read(), out);
     }
     dataFile.close();
+    //append a newline?
     return 1;
   }  
   // if the file isn't open, pop up an error:
   else {
-    Serial.print("*E: error opening file");
-    Serial.println(file);
+    print_log(out, "*E: error opening file '%s'\r\n", file);
     return 0;
   }
 }

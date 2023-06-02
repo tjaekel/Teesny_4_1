@@ -17,13 +17,13 @@
   change tftp_server to QNEthernet - DONE
 - add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
   activate from UART command line via "picoc", works
-- add HTTPD server web pages, with forms to enter commands in Web Browser - TODO
+- add HTTPD server web pages, with forms to enter commands in Web Browser - DONE 
   (no need for Telnet)<br>
   use QNEthernet and AsyncWebServer: two instances (port 80 and 8080) are working in parallel - DONE
 - a second SPI, a shared SPI (same bus with two PCS/SS signals) - TODO
 
 ## Issues
-- we use TeensyThreads: CMD interpreter (with Pico-C) as thread, TFTP as thread - increase default stack sizes
+- we use TeensyThreads: CMD interpreter (with Pico-C) as thread, TFTP as thread - increase default stack sizes, limit size of local variables, e.g. in AsyncWebServer handler functions
 - it is not very reliable: sometimes HTTP traffic stops, sometimes it crashes with report, sometimes it hangs (e.g. on Pico-C command line)  or the WebBrowsers do not get traffic anymore
 
 ## Pico-C needs EXTMEM
@@ -46,6 +46,6 @@ You have to have 2x QSPI RAM chip soldered, otherwise disable Pico-C and do not 
 
 ## Reliability
 it does <b>not</b> work forever: it happens that the WebBrowsers are timing out (no traffic anymore from MCU),
-all crashes or the command line (shell) stopps, MCU reboots and provides a crash report
+all crashes or the command line (shell) stops, MCU reboots and provides a crash report
 - the Arduino LIBs are not very reliable (not for professional use)
 

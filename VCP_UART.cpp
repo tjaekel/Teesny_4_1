@@ -10,6 +10,9 @@ static char UARTbuffer[80];
 static size_t numAvail = 0;
 
 char XPrintBuf[XPRINT_LEN];
+char HTTPDPrintBuf[HTTPD_PRINT_LEN];
+
+static int HTTPDOutIdx = 0;
 
 void VCP_UART_setup(void)
 {
@@ -82,8 +85,46 @@ void VCP_UART_hexDump(unsigned char* b, int len) {
 }
 
 void UART_printString(const char *s, EResultOut out) {
-  while (*s)
-    Serial.print(*s++);
+  if (out == UART_OUT) {
+    while (*s)
+      Serial.print(*s++);
+
+    return;
+  }
+  if (out == HTTPD_OUT) {
+    int l;
+    l = strlen(s);
+    if ((HTTPDOutIdx + l) >= (int)(sizeof(HTTPDPrintBuf) - 1))
+      l = sizeof(HTTPDPrintBuf) - HTTPDOutIdx - 1;
+    if (l)
+      strncat(HTTPDPrintBuf, s, l);
+    HTTPDOutIdx += l;
+  }
+}
+
+void UART_printChar(char c, EResultOut out) {
+  if (out == UART_OUT) {
+      Serial.write(c);
+
+    return;
+  }
+  if (out == HTTPD_OUT) {
+    if ((HTTPDOutIdx + 1) >= (int)(sizeof(HTTPDPrintBuf) - 1))
+      return;
+    
+    HTTPDPrintBuf[HTTPDOutIdx++] = c;
+    HTTPDPrintBuf[HTTPDOutIdx] = '\0';
+  }
+}
+
+int HTTP_GetOut(char **b) {
+  *b = HTTPDPrintBuf;
+  return HTTPDOutIdx;
+}
+
+void HTTP_ClearOut(void) {
+  HTTPDOutIdx = 0;
+  HTTPDPrintBuf[0] = '\0';
 }
 
 int UART_getString(unsigned char *b, size_t l)

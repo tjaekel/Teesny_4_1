@@ -3,6 +3,7 @@
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
 #include <TeensyThreads.h>
+#include "VCP_UART.h"
 #include "tftp_server.h"
 
 using namespace qindesign::network;
@@ -82,19 +83,11 @@ static void teensyMAC(uint8_t *mac)
 extern void tftp_thread(void);
 /*const*/ tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };
 
-void TFTP_setup() {
-#if 0
-  Serial.begin(9600);
-  while (!Serial);
-  delay(100);
-#endif
-  ////Serial.print("*I: Initializing SD card...");
-
+void TFTP_setup(EResultOut out) {
   if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("*E: SD card failed");
+    UART_printString("*E: SD card failed", out);
     return;
   }
-  ////Serial.println("initialization done");
 
 #if 0
   //if not yet done by HTTP_server
@@ -103,9 +96,13 @@ void TFTP_setup() {
   //not on QNEthernet, just begin()
   Ethernet.begin(mac);
 #endif
-  Serial.print("*I: IP address: ");
-  Serial.println(Ethernet.localIP());
-
+  
+  {
+    uint32_t rawAddr;
+    rawAddr = Ethernet.localIP();
+    print_log(out, "*I: IP address: %ld.%ld.%ld.%ld\r\n", (rawAddr >> 0) & 0xFF, (rawAddr >> 8) & 0xFF, (rawAddr >> 16) & 0xFF, (rawAddr >> 24) & 0xFF);
+  }
+  
   ////tftp_init(&tftp_ctx);     //not as thread
   TFTPid = threads.addThread(tftp_thread, 0, 2048);
 }

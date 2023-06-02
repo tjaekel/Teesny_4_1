@@ -60,7 +60,7 @@ void picoc_MsSleep(unsigned long ms)
 
 int picoc_ExecuteCommand(char *s)
 {
-	extern ECMD_DEC_Status CMD_DEC_execute(char *cmd, EResultOut out);
+	////extern ECMD_DEC_Status CMD_DEC_execute(const char *cmd, EResultOut out);
 	CMD_DEC_execute(s, UART_OUT);
     return 0;
 }

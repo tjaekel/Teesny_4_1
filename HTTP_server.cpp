@@ -4,6 +4,10 @@
   #error Only Teensy 4.1 supported
 #endif
 
+#include "VCP_UART.h"
+#include "cmd_dec.h"
+#include "HTTP_data.cpp"
+
 // Debug Level from 0 to 4
 #define _TEENSY41_ASYNC_TCP_LOGLEVEL_       1
 #define _AWS_TEENSY41_LOGLEVEL_             1
@@ -42,34 +46,45 @@ void handleRoot(AsyncWebServerRequest *request)
 {
   ////digitalWrite(led, 1);
 
-#define BUFFER_SIZE     400
+  AsyncResponseStream *response = request->beginResponseStream("text/html");
 
-  char temp[BUFFER_SIZE];
-  int sec = millis() / 1000;
-  int min = sec / 60;
-  int hr = min / 60;
-  //int day = hr / 24;
+  response->print(data_html_a);
 
-  snprintf(temp, BUFFER_SIZE - 1,
-           "<html>\
-<head>\
-<meta http-equiv='refresh' content='1'/>\
-<title>AsyncWebServer-%s</title>\
-<style>\
-body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
-</style>\
-</head>\
-<body>\
-<h2>AsyncWebServer_Teensy41!</h2>\
-<h3>running on %s</h3>\
-<p>Port: <b>%d</b> Uptime: %02d:%02d:%02d</p>\
-<img src=\"/test.svg\" />\
-</body>\
-</html>", BOARD_NAME, BOARD_NAME, /*day*/ request->client()->getLocalPort(), hr % 24, min % 60, sec % 60);
+  //process "CMD=command_line" and insert TEXTAREA
+  {
+    int params = request->params();
 
-  request->send(200, "text/html", temp);
+    for (int i=0;i<params;i++)
+    {
+      AsyncWebParameter* p = request->getParam(i);
+  
+      if (p->isFile())
+      {
+        response->printf("FILE[%s]: %s, size: %u\r\n", p->name().c_str(), p->value().c_str(), p->size());
+      } 
+      else if (p->isPost())
+      {
+        response->printf("POST[%s]: %s\r\n", p->name().c_str(), p->value().c_str());
+      } 
+      else 
+      {
+        //this is "/GET CMD=command_line"
+        ////response->printf("GET[%s]: %s\r\n", p->name().c_str(), p->value().c_str());
+        CMD_DEC_execute((char *)(p->value().c_str()), HTTPD_OUT);
+      }
+    }
+  }
 
-  ////digitalWrite(led, 0);
+  {
+    int l;
+    char *b;
+    l = HTTP_GetOut(&b);
+    if (l)
+      response->print(b);
+    HTTP_ClearOut();
+  }
+  response->print(data_html_b);
+  request->send(response);            //it is needed, but closes the connection!
 }
 
 void handleNotFound(AsyncWebServerRequest *request)
@@ -94,6 +109,7 @@ void handleNotFound(AsyncWebServerRequest *request)
   ////digitalWrite(led, 0);
 }
 
+#if 0
 void drawGraph(AsyncWebServerRequest *request)
 {
   String out;
@@ -118,7 +134,7 @@ void drawGraph(AsyncWebServerRequest *request)
 
   request->send(200, "image/svg+xml", out);
 }
-
+#endif
 
 void HTTPD_setup(void)
 {
@@ -181,6 +197,7 @@ void HTTPD_setup(void)
     handleRoot(request);
   });
 
+#if 0
   server.on("/test.svg", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     drawGraph(request);
@@ -190,6 +207,7 @@ void HTTPD_setup(void)
   {
     request->send(200, "text/plain", "This works as well");
   });
+#endif
 
   server.onNotFound(handleNotFound);
 
@@ -201,6 +219,7 @@ void HTTPD_setup(void)
     handleRoot(request);
   });
 
+#if 0
   server2.on("/test.svg", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     drawGraph(request);
@@ -210,6 +229,7 @@ void HTTPD_setup(void)
   {
     request->send(200, "text/plain", "This works as well");
   });
+#endif
 
   server2.onNotFound(handleNotFound);
 

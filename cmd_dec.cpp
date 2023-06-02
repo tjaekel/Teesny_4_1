@@ -419,7 +419,7 @@ void hex_dump(unsigned char *ptr, int len, int mode, EResultOut out)
 
 	////if (out == UART_OUT)
 	{
-		print_log(UART_OUT, "%08lx | ", (unsigned long)ptr);
+		print_log(out, "%08lx | ", (unsigned long)ptr);
 		while (xLen > 0)
 		{
 			if (mode == 1)
@@ -462,18 +462,18 @@ void hex_dump(unsigned char *ptr, int len, int mode, EResultOut out)
 				{
 					//optional: print ASCII characters
 					int j;
-					print_log(UART_OUT, "  ");
+					print_log(out, "  ");
 					for (j = 16; j > 0; j--)
 					{
 						if ((*(ptr - j) >= ' ') && (*(ptr - j) < 0x7F))
-							print_log(UART_OUT, "%c", *(ptr - j));
+							print_log(out, "%c", *(ptr - j));
 						else
-							print_log(UART_OUT, ".");
+							print_log(out, ".");
 					}
 				}
 #endif
 				if (xLen)
-					print_log(UART_OUT, "\r\n%08lx | ", (unsigned long)ptr);
+					print_log(out, "\r\n%08lx | ", (unsigned long)ptr);
 				else
 					UART_Send((const char*)"\r\n", 2, out);
 			}
@@ -622,14 +622,14 @@ ECMD_DEC_Status CMD_i2cclk (TCMD_DEC_Results* res, EResultOut out)
 #endif
 
 /* mapping for needed functions */
-void  UART_Send(const char* str, int chrs, EResultOut out) {
+void UART_Send(const char* str, int chrs, EResultOut out) {
   while (chrs--) {
-    Serial.write(*str++);
+    UART_printChar(*str++, out);
   }
 }
 
-void  UART_SendStr(const char* str, EResultOut out) {
-  Serial.print(str);
+void UART_SendStr(const char* str, EResultOut out) {
+  UART_printString(str, out);
 }
 
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
@@ -655,7 +655,7 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
 
   SPI_transaction(0, SPIbufTx, SPIbufRx, res->num);
 
-  hex_dump((unsigned char *)SPIbufRx, res->num, 1, UART_OUT);
+  hex_dump((unsigned char *)SPIbufRx, res->num, 1, out);
 
   MEM_PoolFree(SPIbufTx);
   MEM_PoolFree(SPIbufRx);
@@ -677,7 +677,7 @@ ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out) {
 
 ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
   if (res->val[0])
-    SDCARD_setup();
+    SDCARD_setup(out);
   else
     SDCARD_deinit();
 
@@ -685,7 +685,7 @@ ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
 }
 
 ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
-  SDCARD_printDirectory("/", 0);
+  SDCARD_printDirectory("/", 0, out);
 
   return CMD_DEC_OK;
 }
@@ -709,7 +709,7 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
 
 ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out) {
   if (res->val[0])
-    TFTP_setup();
+    TFTP_setup(out);
   else
     TFTP_kill();
 
@@ -736,7 +736,7 @@ ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results *res, EResultOut out)
 {
-	SDCARD_PrintFile(res->str);
+	SDCARD_PrintFile(res->str, out);
 
 	return CMD_DEC_OK;
 }
