@@ -23,11 +23,11 @@ int CFG_Write(void) {
   return 0;
 }
 
-void CFG_Print(void) {
+void CFG_Print(EResultOut out) {
   size_t i;
   unsigned long *ptr = (unsigned long *)&gCFGparams;
   for (i = 0; i < (sizeof(tCFGParams) / sizeof(unsigned long)); i++) {
-    print_log(UART_OUT, "%2d : %08lx\r\n", i, *ptr++);
+    print_log(out, "%2d : %08lx\r\n", i, *ptr++);
   }
 }
 

@@ -15,7 +15,7 @@ extern tCFGParams gCFGparams;
 
 int CFG_Read(void);
 int CFG_Write(void);
-void CFG_Print(void);
+void CFG_Print(EResultOut out);
 void CFG_SetDefault(void);
 
 #endif

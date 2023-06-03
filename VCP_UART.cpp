@@ -74,7 +74,7 @@ void VCP_UART_putString(const char* s)
 }
 
 void VCP_UART_printPrompt(void) {
-    Serial.print("\r\n> ");
+    Serial.print("\r\n> \003");               //with EOT for easier parsing
 }
 
 void VCP_UART_hexDump(unsigned char* b, int len) {
@@ -94,8 +94,8 @@ void UART_printString(const char *s, EResultOut out) {
   if (out == HTTPD_OUT) {
     int l;
     l = strlen(s);
-    if ((HTTPDOutIdx + l) >= (int)(sizeof(HTTPDPrintBuf) - 1))
-      l = sizeof(HTTPDPrintBuf) - HTTPDOutIdx - 1;
+    if ((HTTPDOutIdx + l) >= (int)(sizeof(HTTPDPrintBuf) - 2))
+      l = sizeof(HTTPDPrintBuf) - HTTPDOutIdx - 2;
     if (l)
       strncat(HTTPDPrintBuf, s, l);
     HTTPDOutIdx += l;
@@ -109,12 +109,17 @@ void UART_printChar(char c, EResultOut out) {
     return;
   }
   if (out == HTTPD_OUT) {
-    if ((HTTPDOutIdx + 1) >= (int)(sizeof(HTTPDPrintBuf) - 1))
+    if ((HTTPDOutIdx + 1) >= (int)(sizeof(HTTPDPrintBuf) - 2))
       return;
     
     HTTPDPrintBuf[HTTPDOutIdx++] = c;
     HTTPDPrintBuf[HTTPDOutIdx] = '\0';
   }
+}
+
+void HTTP_PutEOT(void) {
+  HTTPDPrintBuf[HTTPDOutIdx++] = 0x03;          //EOT
+  HTTPDPrintBuf[HTTPDOutIdx] = '\0';
 }
 
 int HTTP_GetOut(char **b) {

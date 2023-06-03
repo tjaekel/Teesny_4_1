@@ -49,3 +49,8 @@ it does <b>not</b> work forever: it happens that the WebBrowsers are timing out 
 all crashes or the command line (shell) stops, MCU reboots and provides a crash report
 - the Arduino LIBs are not very reliable (not for professional use)
 
+## Python Script
+A Python script to use server on port 8080 is added: fire MCU commands from
+an interactrive Python command loop (like TELNET).<br>
+Modify the IP address for your MCU (DHCP is used - different IP address).
+

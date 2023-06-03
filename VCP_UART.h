@@ -41,6 +41,7 @@ void UART_putChar(unsigned char c);
 }
 #endif
 
+void HTTP_PutEOT(void);
 int HTTP_GetOut(char **b);
 void HTTP_ClearOut(void);
 

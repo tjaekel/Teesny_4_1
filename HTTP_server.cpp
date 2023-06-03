@@ -40,12 +40,8 @@ AsyncWebServer    server2(8080);
 
 int reqCount = 0;                // number of requests received
 
-////const int led = 13;
-
 void handleRoot(AsyncWebServerRequest *request)
 {
-  ////digitalWrite(led, 1);
-
   AsyncResponseStream *response = request->beginResponseStream("text/html");
 
   response->print(data_html_a);
@@ -68,7 +64,7 @@ void handleRoot(AsyncWebServerRequest *request)
       } 
       else 
       {
-        //this is "/GET CMD=command_line"
+        //this is "/GET CMD=command_line" - here it works with space separated arguments - WebBrowser does for use
         ////response->printf("GET[%s]: %s\r\n", p->name().c_str(), p->value().c_str());
         CMD_DEC_execute((char *)(p->value().c_str()), HTTPD_OUT);
       }
@@ -78,6 +74,7 @@ void handleRoot(AsyncWebServerRequest *request)
   {
     int l;
     char *b;
+    HTTP_PutEOT();                    //place EOT into buffer
     l = HTTP_GetOut(&b);
     if (l)
       response->print(b);
@@ -89,76 +86,73 @@ void handleRoot(AsyncWebServerRequest *request)
 
 void handleNotFound(AsyncWebServerRequest *request)
 {
-  ////digitalWrite(led, 1);
-  String message = "File Not Found\n\n";
+  String message;
 
-  message += "URI: ";
-  message += request->url();
-  message += "\nMethod: ";
-  message += (request->method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += request->args();
-  message += "\n";
+  String str = request->url().c_str();
+  const char *cstr = str.c_str();
 
-  for (uint8_t i = 0; i < request->args(); i++)
-  {
-    message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+  if (*cstr == '/') {
+    CMD_DEC_execute((char *)++cstr, HTTPD_OUT);
+    {
+      int l;
+      char *b;
+      ////HTTP_PutEOT();                    //place EOT into buffer - it seems to kill the WebBrowser session!
+      l = HTTP_GetOut(&b);
+      if (l)
+        message += b;
+      HTTP_ClearOut();
+    }
+  }
+  else {
+    //not possible to enter URL without '/' in WebBrowser
+    message += "BIN command";
   }
 
-  request->send(404, "text/plain", message);
-  ////digitalWrite(led, 0);
+  request->send(200, "text/plain", message);
 }
 
-#if 0
-void drawGraph(AsyncWebServerRequest *request)
+void handleNotFound2(AsyncWebServerRequest *request)
 {
-  String out;
+  /* send a request without '/', just "GET " and following command:
+   * but it fails with space separated command line arguments!
+   * the URL (URI) must be encoded with %20 (etc.), because the URL is parsed and a space cuts all remaining parts!
+   * ATT: this generates also a header, with "200, text/plain, Connection: close", but we do not need and do not want this
+   * header - HOW? also this conection should not be closed, but it looks like - the MCU does not close, good
+   */
+  String str = request->url().c_str();
+  const char *cstr = str.c_str();
 
-  out.reserve(4000);
-  char temp[70];
-
-  out += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"310\" height=\"150\">\n";
-  out += "<rect width=\"310\" height=\"150\" fill=\"rgb(250, 230, 210)\" stroke-width=\"2\" stroke=\"rgb(0, 0, 0)\" />\n";
-  out += "<g stroke=\"blue\">\n";
-  int y = rand() % 130;
-
-  for (int x = 10; x < 300; x += 10)
+  //for debug - on UART
+  size_t l = strlen(cstr);
+  Serial.printf("L: %d\r\n", l);
+  for (size_t i = 0; i < l; i++)
   {
-    int y2 = rand() % 130;
-    sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke-width=\"2\" />\n", x, 140 - y, x + 10, 140 - y2);
-    out += temp;
-    y = y2;
+    Serial.printf("%02X ", cstr[i]);
   }
+  Serial.println();
+  //end debug
 
-  out += "</g>\n</svg>\n";
+  CMD_DEC_execute((char *)cstr, HTTPD_OUT);
 
-  request->send(200, "image/svg+xml", out);
+  {
+    int l;
+    char *b;
+    HTTP_PutEOT();                    //place EOT into buffer - needed by Python script!
+    l = HTTP_GetOut(&b);
+    if (l)
+      request->send(200, "text/plain", b);
+      Serial.println(b);
+    HTTP_ClearOut();
+  }
 }
-#endif
 
 void HTTPD_setup(void)
 {
-#if 0
-  Serial.print("\nStart Async_AdvancedWebServer on ");
-  Serial.print(BOARD_NAME);
-  Serial.print(" with ");
-  Serial.println(SHIELD_TYPE);
-  Serial.println(ASYNC_WEBSERVER_TEENSY41_VERSION);
-
-  delay(500);
-#endif
-
 #if USING_DHCP
   // Start the Ethernet connection, using DHCP
-#if 0
-  Serial.print("Initialize Ethernet using DHCP => ");
-#endif
   Ethernet.begin();
 #else
   // Start the Ethernet connection, using static IP
-#if 0
-  Serial.print("Initialize Ethernet using static IP => ");
-#endif
   Ethernet.begin(myIP, myNetmask, myGW);
   Ethernet.setDNSServerIP(mydnsServer);
 #endif
@@ -172,18 +166,11 @@ void HTTPD_setup(void)
       Serial.println(F("*E: Ethernet cable is not connected."));
     }
 
-    // Stay here forever
+    // Stay here forever in case of error
     while (true)
     {
       delay(1);
     }
-  }
-  else
-  {
-#if 0
-    Serial.print(F("*I: Connected! IP address:"));
-    Serial.println(Ethernet.localIP());
-#endif
   }
 
 #if USING_DHCP
@@ -197,48 +184,20 @@ void HTTPD_setup(void)
     handleRoot(request);
   });
 
-#if 0
-  server.on("/test.svg", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    drawGraph(request);
-  });
-
-  server.on("/inline", [](AsyncWebServerRequest * request)
-  {
-    request->send(200, "text/plain", "This works as well");
-  });
-#endif
-
   server.onNotFound(handleNotFound);
 
   server.begin();
 
-  //
+  //it looks like you can still activate the callbacks on the other port
   server2.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
   {
-    handleRoot(request);
+    handleRoot(request);      //this reuses the callback on port 80: if we request with "GET /command",
+                              //this is handled here
   });
 
-#if 0
-  server2.on("/test.svg", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    drawGraph(request);
-  });
-
-  server2.on("/inline", [](AsyncWebServerRequest * request)
-  {
-    request->send(200, "text/plain", "This works as well");
-  });
-#endif
-
-  server2.onNotFound(handleNotFound);
+  server2.onNotFound(handleNotFound2);
 
   server2.begin();
-
-#if 0
-  Serial.print(F("\r\n*I: HTTP MCU IP address : "));
-  Serial.println(Ethernet.localIP());
-#endif
 }
 
 uint32_t HTTPD_GetIPAddress(void) {

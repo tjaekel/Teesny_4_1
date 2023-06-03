@@ -702,7 +702,7 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
     }
   }
 
-  CFG_Print();
+  CFG_Print(out);
 
   return CMD_DEC_OK;
 }
