@@ -22,10 +22,6 @@
   use QNEthernet and AsyncWebServer: two instances (port 80 and 8080) are working in parallel - DONE
 - a second SPI, a shared SPI (same bus with two PCS/SS signals) - TODO
 
-## Issues
-- we use TeensyThreads: CMD interpreter (with Pico-C) as thread, TFTP as thread - increase default stack sizes, limit size of local variables, e.g. in AsyncWebServer handler functions
-- it is not very reliable: sometimes HTTP traffic stops, sometimes it crashes with report, sometimes it hangs (e.g. on Pico-C command line)  or the WebBrowsers do not get traffic anymore
-
 ## Pico-C needs EXTMEM
 ATTENTION: the Pico-C "picoc" uses the external QSPI memory (not flash, both as RAM, 16 MB)<br>
 You have to have 2x QSPI RAM chip soldered, otherwise disable Pico-C and do not start (via "picoc" on UART command line)
@@ -44,13 +40,9 @@ You have to have 2x QSPI RAM chip soldered, otherwise disable Pico-C and do not 
   while (1) { printf("i: %d\r\n", i++); mssleep(1000); }<br>
 - it should run both WebBrowsers, do a TFTP file tansfer and display the incrementing 'i' every second (picoc)
 
-## Reliability
-it does <b>not</b> work forever: it happens that the WebBrowsers are timing out (no traffic anymore from MCU),
-all crashes or the command line (shell) stops, MCU reboots and provides a crash report
-- the Arduino LIBs are not very reliable (not for professional use)
-
 ## Python Script
 A Python script to use server on port 8080 is added: fire MCU commands from
 an interactrive Python command loop (like TELNET).<br>
-Modify the IP address for your MCU (DHCP is used - different IP address).
+Modify the IP address in Python script for your MCU (DHCP is used - different IP address).<br>
+The port 8080 is based on QNEthernet TCP server (as native TCP server), running as a TeensyThread.
 

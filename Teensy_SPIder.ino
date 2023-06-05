@@ -9,6 +9,7 @@
 #include "VCP_UART.h"
 #include "cmd_dec.h"
 #include "HTTP_server.h"
+#include "TCP_Server.h"
 #include "SD_Card.h"
 #include "SYS_config.h"
 #include "TFTP.h"
@@ -47,6 +48,7 @@ void setup(void) {
     VCP_UART_setup();
 
     HTTPD_setup();
+    TCP_Server_setup();
 
 #ifndef LED_DEBUG
     SPI_setup();
@@ -109,5 +111,6 @@ void loop() {
     }
 #else
     delay(1000);
+    ////TCP_Server_loop();
 #endif
 }

@@ -36,7 +36,6 @@ using namespace qindesign::network;
 #include <AsyncWebServer_Teensy41.h>
 
 AsyncWebServer    server(80);
-AsyncWebServer    server2(8080);
 
 int reqCount = 0;                // number of requests received
 
@@ -111,41 +110,6 @@ void handleNotFound(AsyncWebServerRequest *request)
   request->send(200, "text/plain", message);
 }
 
-void handleNotFound2(AsyncWebServerRequest *request)
-{
-  /* send a request without '/', just "GET " and following command:
-   * but it fails with space separated command line arguments!
-   * the URL (URI) must be encoded with %20 (etc.), because the URL is parsed and a space cuts all remaining parts!
-   * ATT: this generates also a header, with "200, text/plain, Connection: close", but we do not need and do not want this
-   * header - HOW? also this conection should not be closed, but it looks like - the MCU does not close, good
-   */
-  String str = request->url().c_str();
-  const char *cstr = str.c_str();
-
-  //for debug - on UART
-  size_t l = strlen(cstr);
-  Serial.printf("L: %d\r\n", l);
-  for (size_t i = 0; i < l; i++)
-  {
-    Serial.printf("%02X ", cstr[i]);
-  }
-  Serial.println();
-  //end debug
-
-  CMD_DEC_execute((char *)cstr, HTTPD_OUT);
-
-  {
-    int l;
-    char *b;
-    HTTP_PutEOT();                    //place EOT into buffer - needed by Python script!
-    l = HTTP_GetOut(&b);
-    if (l)
-      request->send(200, "text/plain", b);
-      Serial.println(b);
-    HTTP_ClearOut();
-  }
-}
-
 void HTTPD_setup(void)
 {
 #if USING_DHCP
@@ -187,17 +151,6 @@ void HTTPD_setup(void)
   server.onNotFound(handleNotFound);
 
   server.begin();
-
-  //it looks like you can still activate the callbacks on the other port
-  server2.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    handleRoot(request);      //this reuses the callback on port 80: if we request with "GET /command",
-                              //this is handled here
-  });
-
-  server2.onNotFound(handleNotFound2);
-
-  server2.begin();
 }
 
 uint32_t HTTPD_GetIPAddress(void) {

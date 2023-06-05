@@ -68,11 +68,11 @@ class NetworkInterface() :
 
         #encode as URL:
         #we have to encode space and other characters as an URL!
-        cmd = urllib.parse.quote(cmd)
+        ##cmd = urllib.parse.quote(cmd)
 
-        message = 'GET ' + cmd + '\r\n\r\n'     #we send without '/'!
+        message = cmd     #we send without 'GET /'! we do not need here 2x \r\n
         ##print("\nLen message: %d" % (len(message)))
-        self.ConnectClose()
+        ##self.ConnectClose()
         self.ConnectOpen()
 
         self.sock.sendall(message.encode())
@@ -93,12 +93,12 @@ class NetworkInterface() :
         #print response for the command
 
         ##we get the reponse with a HTML header: strip it off:
-        data = self.stripOfHeader(data)
+        ##data = self.stripOfHeader(data)
 
         print(data)
 
         #close connection as web browser would do
-        ##self.ConnectClose()
+        self.ConnectClose()
 
     def TextCommandBinary(self, cmd) :
         """TextCommandLarge() send an ASCII command via BINARY: CMD 0x01 plus LEN as 3 bytes
