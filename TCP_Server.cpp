@@ -229,6 +229,39 @@ void tellServer(bool hasIP, bool linkState) {
 //HTTP request buffer
 static uint8_t rxBuf[2048];
 
+void processClientBinary(ClientState &state, uint8_t *buf, int avail) {
+  int len;
+  len  = *(buf + 1);
+  len |= *(buf + 2) << 8;
+  len |= *(buf + 3) << 16;       //get the length, LITTLE ENDIAN
+
+  switch (*buf) {
+    case 0x01 :     //binary command
+          //put a NUL into buffer:
+          *(buf + 4 + len) = '\0';
+
+          CMD_DEC_execute((char *)(buf + 4), HTTPD_OUT);
+          {
+            int l;
+            char *b;
+            ////HTTP_PutEOT();                    //place EOT into buffer - we do not need here
+            l = HTTP_GetOut(&b);
+
+            /* hijack the buffer to update command and length */
+            *(buf + 1) = (uint8_t)l;
+            *(buf + 2) = (uint8_t)(l >> 8);
+            *(buf + 2) = (uint8_t)(l >> 16);
+
+            strncpy((char *)(buf + 4), b, l);
+            state.client.writeFully(buf, l + 4);
+            HTTP_ClearOut();
+          }
+          break;
+    default:
+          break;
+  }
+}
+
 // The simplest possible (very non-compliant) HTTP server. Respond to
 // any input with an HTTP/1.1 response.
 void processClientData(ClientState &state) {
@@ -242,6 +275,13 @@ void processClientData(ClientState &state) {
 
   state.lastRead = millis();
   state.client.read(rxBuf, sizeof(rxBuf));        //actually avail is number of bytes
+
+  /* check if we have a binary command */
+  if (*rxBuf < ' ') {
+    processClientBinary(state, rxBuf, avail);
+    return;
+  }
+
   //append a NUL for printf
   *(rxBuf + avail) = '\0';
   printf("|%s|\r\n", rxBuf);
@@ -303,7 +343,7 @@ static void TCP_Server_thread(void) {
       continue;
     }
 
-#if 1
+#if 0
     /* do this when we got an ASCII request, for BINARY - keep it open */
     // Check if we need to force close the client
     if (state.outputClosed) {
@@ -315,7 +355,8 @@ static void TCP_Server_thread(void) {
         state.closed = true;
         continue;
       }
-    } else {
+    }
+    else {
       if (millis() - state.lastRead >= kClientTimeout) {
         IPAddress ip = state.client.remoteIP();
         printf("Client timeout: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);

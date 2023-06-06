@@ -139,7 +139,7 @@ class NetworkInterface() :
                 print(data[4:].decode())
 
         #let the connection open
-        #self.ConnectClose()
+        #self.ConnectClose()        #keep the connection open until we kill the script
 
     def CommandShell(self) :
         """interactive, like TELNET, shell command, using the ASCII version (with "GET /...") for commands
@@ -155,8 +155,8 @@ class NetworkInterface() :
 
             ##print(cmd)
             #use TEXT vs. BINARY command (a binary packet with ASCII command text)
-            self.TextCommand(cmd)
-            ##self.TextCommandBinary(cmd)
+            ##self.TextCommand(cmd)
+            self.TextCommandBinary(cmd)
 
         #close the connection when done
         self.ConnectClose()

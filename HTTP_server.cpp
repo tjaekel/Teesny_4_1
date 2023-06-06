@@ -73,7 +73,7 @@ void handleRoot(AsyncWebServerRequest *request)
   {
     int l;
     char *b;
-    HTTP_PutEOT();                    //place EOT into buffer
+    ////HTTP_PutEOT();                    //place EOT into buffer - do NOT do it for web browser as client!
     l = HTTP_GetOut(&b);
     if (l)
       response->print(b);
