@@ -15,6 +15,8 @@
 
 #include "HTTP_data.cpp"
 
+#include "SYS_config.h"
+
 using namespace qindesign::network;
 
 // --------------------------------------------------------------------------
@@ -172,7 +174,7 @@ void TCP_Server_setup(void) {
     }
   }
 
-  ::xTaskCreate(TCP_Server_thread, "TCP_Server_thread", 1024, nullptr, 1, nullptr);
+  ::xTaskCreate(TCP_Server_thread, "TCP_Server_thread", THREAD_STACK_SIZE_HTTPD, nullptr, 1, nullptr);
 }
 
 // Tell the server there's been an IP address or link state change.

@@ -3,6 +3,16 @@
 
 ////using namespace std;
 
+/* define system macros, stack size etc. */
+
+#define VERSION_STRING  "---- Teensy FW: V1.1.1 ----"
+#define THREAD_STACK_SIZE_CMD         (2*1024)
+#define THREAD_STACK_SIZE_GPIO        (2*1024)
+#define THREAD_STACK_SIZE_HTTPD       (1*1024)
+#define THREAD_STACK_SIZE_TFTP        (1*1024)
+
+/* ---------- flash sys_cfg ---------------- */
+
 typedef struct structCFGParams {
   unsigned long key;
   unsigned long SPI1br;

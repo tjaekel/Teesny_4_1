@@ -812,7 +812,7 @@ const struct LibraryFunction CLibrary[] =
 
     /* extension for ReadMem and WriteMem */
 #if 1
-    { LibHelp,			    "void CHelp();" },
+    { LibHelp,			    "void help();" },
     { LibPicocRestart,  "void PicocRestart();" },
     //{ LibReadMem,		"unsigned long ReadMem(unsigned long);" },
     //{ LibWriteMem,	"void WriteMem(unsigned long,unsigned long);" },

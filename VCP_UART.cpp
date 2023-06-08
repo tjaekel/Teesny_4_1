@@ -194,6 +194,14 @@ int UART_getChar(void) {
   }
 }
 
+int UART_getCharNW(void) {
+  if (Serial.available() > 0) {
+    return Serial.read();
+  }
+
+  return 0;
+}
+
 void UART_putChar(unsigned char c) {
   Serial.write(c);
   if (c == '\n')

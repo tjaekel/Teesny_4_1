@@ -6,28 +6,37 @@
 #include <climits>
 
 #include "VCP_UART.h"
+#include "picoc.h"
+
+#include "SYS_config.h"
 
 unsigned long INTcount = 0;
 
 static TaskHandle_t xTaskToNotify = NULL;
+static volatile int sHandlerRunning = 0;
 
 void GPIO_Interrupt() {
   INTcount++;
 
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    /* At this point xTaskToNotify should not be NULL as a transmission was
-    in progress. */
-    configASSERT( xTaskToNotify != NULL );
+  if ( ! sHandlerRunning)
+  {
+    sHandlerRunning = 1;
 
-    /* Notify the task that the transmission is complete. */
-    vTaskNotifyGiveIndexedFromISR( xTaskToNotify, 0, &xHigherPriorityTaskWoken );
+  /* At this point xTaskToNotify should not be NULL as a transmission was
+     in progress. */
+  configASSERT( xTaskToNotify != NULL );
 
-    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-    should be performed to ensure the interrupt returns directly to the highest
-    priority task.  The macro used for this purpose is dependent on the port in
-    use and may be called portEND_SWITCHING_ISR(). */
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  /* Notify the task that the transmission is complete. */
+  vTaskNotifyGiveIndexedFromISR( xTaskToNotify, 0, &xHigherPriorityTaskWoken );
+
+  /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+  should be performed to ensure the interrupt returns directly to the highest
+  priority task.  The macro used for this purpose is dependent on the port in
+  use and may be called portEND_SWITCHING_ISR(). */
+  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  }
 }
 
 unsigned long GPIO_GetINTcounter(void) {
@@ -46,14 +55,19 @@ void GPIO_thread(void *pvParameters) {
                               &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
                               portMAX_DELAY );  /* Block indefinitely. */
 
-    print_log(UART_OUT, "GPIO INT: %ld\r\n", INTcount);
+    if ( ! picoc_INThandler()) {
+      print_log(UART_OUT, "GPIO INT: %ld\r\n", INTcount);
+    }
+
+    sHandlerRunning = 0;
   }
 }
 
 void GPIO_setup(void) {
-    //configure GPIO pin for HW INT
-    pinMode(23, arduino::INPUT_PULLUP);                //enable pull-up
-    attachInterrupt(digitalPinToInterrupt(23), GPIO_Interrupt, arduino::FALLING);
+  //configure GPIO pin for HW INT
+  pinMode(23, arduino::INPUT_PULLUP);                //enable pull-up
+  attachInterrupt(digitalPinToInterrupt(23), GPIO_Interrupt, arduino::FALLING);
 
-  ::xTaskCreate(GPIO_thread, "GPIO_thread", 512, nullptr, 5, nullptr);
+  /* ATT: the stack size must be large enough: we call Pico-C when INT was triggered and Pico-C has SetINTHandler(char *) done */
+  ::xTaskCreate(GPIO_thread, "GPIO_thread", THREAD_STACK_SIZE_GPIO, nullptr, 5, nullptr);
 }

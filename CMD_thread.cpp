@@ -7,6 +7,8 @@
 #include "cmd_dec.h"
 #include "CMD_thread.h"
 
+#include "SYS_config.h"
+
 void CMD_loop(void) {
 #if 1
   char* UARTcmd = NULL;
@@ -25,7 +27,7 @@ void CMD_loop(void) {
 }
 
 void CMD_thread(void *pvParameters) {
-  VCP_UART_putString("---- Teensy FW: V1.1.0 ----");
+  VCP_UART_putString(VERSION_STRING);
   VCP_UART_printPrompt();
 
   while (1) {
@@ -39,7 +41,7 @@ void CMD_setup(void) {
     delay(10);
   }
             
-  ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE, nullptr, 2, nullptr);
+  ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE_CMD, nullptr, 2, nullptr);
 }
 
 /* helper functions */

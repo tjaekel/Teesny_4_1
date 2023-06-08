@@ -36,6 +36,7 @@ void UART_printChar(char c, EResultOut out);
 
 int UART_getString(unsigned char *b, size_t len);
 int UART_getChar(void);
+int UART_getCharNW(void);
 void UART_putChar(unsigned char c);
 #ifdef __cplusplus
 }

@@ -3,8 +3,6 @@
 
 ////using namespace std;
 
-#define VERSION_INFO		"V1.00"
-
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>

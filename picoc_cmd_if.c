@@ -5,8 +5,6 @@
  *      Author: tj
  */
 
-//#include <TeensyThreads.h>      //fails - not possible in C-code file!
-
 #include "VCP_UART.h"
 #include "cmd_dec.h"
 //#include "GPIO_user.h"
@@ -35,28 +33,20 @@ int picoc_CheckForStopped(void)
 
 int picoc_CheckForAbort(void)
 {
-#if 0
 	/* read UART not-waiting and check for CTRL-C */
-	unsigned char c[1];
-	if (CDC_GetRx(c, 1))
+	int c;
+	c = UART_getCharNW();
+  if (c)
 	{
-		if (c[0] == 0x03)
+		if (c == 0x03)
 		{
 			GpicocAbort = 1;
 			longjmp(ExitBuf, 1);
 			return 1;
 		}
 	}
-#endif
     return 0;
 }
-
-#if 0
-void picoc_MsSleep(unsigned long ms)
-{
-	threads.delay(ms);
-}
-#endif
 
 int picoc_ExecuteCommand(char *s)
 {
