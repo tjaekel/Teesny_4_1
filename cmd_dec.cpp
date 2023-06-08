@@ -12,7 +12,6 @@
 #include "SPI_dev.h"
 #include "SD_Card.h"
 #include "SYS_config.h"
-#include "TFTP.h"
 #include "picoc.h"
 #include "GPIO.h"
 
@@ -37,8 +36,6 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
-
-ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 
@@ -121,11 +118,6 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"syscfg",
 				.help = (const char*)"print sys config parameters",
 				.func = CMD_syscfg
-		},
-    {
-				.cmd = (const char*)"tftp",
-				.help = (const char*)"start/stop TFTP server [1|0]",
-				.func = CMD_tftp
 		},
     {
 				.cmd = (const char*)"ipaddr",
@@ -706,15 +698,6 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   CFG_Print(out);
 
   print_log(out, "INT cnt: %ld\r\n", GPIO_GetINTcounter());
-
-  return CMD_DEC_OK;
-}
-
-ECMD_DEC_Status CMD_tftp(TCMD_DEC_Results* res, EResultOut out) {
-  if (res->val[0])
-    TFTP_setup(out);
-  else
-    TFTP_kill();
 
   return CMD_DEC_OK;
 }

@@ -338,60 +338,59 @@ void processClientData(ClientState &state) {
 static void TCP_Server_thread(void *pvParameters) {
   while (1) {
     vTaskDelay(1);
-  EthernetClient client = TCPserver.accept();
-  if (client) {
-    // We got a connection!
-    IPAddress ip = client.remoteIP();
-    print_log(UART_OUT, "Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-    clients.emplace_back(std::move(client));
-    print_log(UART_OUT, "Client count: %zu\r\n", clients.size());
-  }
-
-  // Process data from each client
-  for (ClientState &state : clients) {  // Use a reference so we don't copy
-    vTaskDelay(1);
-    if (!state.client.connected()) {
-      state.closed = true;
-      continue;
+    EthernetClient client = TCPserver.accept();
+    if (client) {
+      // We got a connection!
+      IPAddress ip = client.remoteIP();
+      print_log(UART_OUT, "Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      clients.emplace_back(std::move(client));
+      print_log(UART_OUT, "Client count: %zu\r\n", clients.size());
     }
+
+    // Process data from each client
+    for (ClientState &state : clients) {  // Use a reference so we don't copy
+      vTaskDelay(1);
+      if (!state.client.connected()) {
+        state.closed = true;
+        continue;
+      }
 
 #if 0
-    /* do this when we got an ASCII request, for BINARY - keep it open */
-    // Check if we need to force close the client
-    if (state.outputClosed) {
-      if (millis() - state.closedTime >= kShutdownTimeout) {
-        IPAddress ip = state.client.remoteIP();
-        print_log(UART_OUT, "Client shutdown timeout: %u.%u.%u.%u\r\n",
+      /* do this when we got an ASCII request, for BINARY - keep it open */
+      // Check if we need to force close the client
+      if (state.outputClosed) {
+        if (millis() - state.closedTime >= kShutdownTimeout) {
+          IPAddress ip = state.client.remoteIP();
+          print_log(UART_OUT, "Client shutdown timeout: %u.%u.%u.%u\r\n",
                ip[0], ip[1], ip[2], ip[3]);
-        state.client.close();
-        state.closed = true;
-        continue;
+          state.client.close();
+          state.closed = true;
+          continue;
+        }
       }
-    }
-    else {
-      if (millis() - state.lastRead >= kClientTimeout) {
-        IPAddress ip = state.client.remoteIP();
-        print_log(UART_OUT, "Client timeout: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-        state.client.close();
-        state.closed = true;
-        continue;
+      else {
+        if (millis() - state.lastRead >= kClientTimeout) {
+          IPAddress ip = state.client.remoteIP();
+          print_log(UART_OUT, "Client timeout: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+          state.client.close();
+          state.closed = true;
+          continue;
+        }
       }
-    }
 #endif
 
-    processClientData(state);
-  }
+      processClientData(state);
+    } /* end for */
 
-  // Clean up all the closed clients
-  size_t size = clients.size();
-  clients.erase(std::remove_if(clients.begin(), clients.end(),
+    // Clean up all the closed clients
+    size_t size = clients.size();
+    clients.erase(std::remove_if(clients.begin(), clients.end(),
                                [](const auto &state) { return state.closed; }),
                 clients.end());
-  if (clients.size() != size) {
-    print_log(UART_OUT, "New client count: %zu\r\n", clients.size());
-  }
-
-  }
+    if (clients.size() != size) {
+      print_log(UART_OUT, "New client count: %zu\r\n", clients.size());
+    }
+  } /* end while */
 }
 
 uint32_t HTTPD_GetIPAddress(void) {

@@ -3,7 +3,11 @@
 
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
-#include <TeensyThreads.h>
+
+#include "arduino_freertos.h"
+#include "avr/pgmspace.h"
+#include <climits>
+
 #include "tftp_server.h"
 
 using namespace qindesign::network;
@@ -124,7 +128,8 @@ void recv() {
   rlth = Udp.read(pin, sizeof(pktin));
   //needed for QNEthernet
   if ( ! rlth) {
-    threads.delay(10);
+    ////threads.delay(10);
+    vTaskDelay(10);
     return;
   }
 
@@ -264,7 +269,7 @@ void tftp_init(const struct tftp_context *ctx)
 
 extern /*const*/ tftp_context tftp_ctx;
 
-void tftp_thread(void) {
+void tftp_thread(void *pvParameters) {
   tftp_state.handle    = NULL;
   tftp_state.port      = 0;
   tftp_state.ctx       = &tftp_ctx;
@@ -276,7 +281,7 @@ void tftp_thread(void) {
     if (Udp.parsePacket())
       recv();
     else
-      threads.delay(10);
+      vTaskDelay(10);
 
     uint32_t ms = millis();
     if (tftp_state.handle != NULL) {
@@ -291,7 +296,7 @@ void tftp_thread(void) {
         }
       }
     }
-    threads.yield();
+    taskYIELD();
   }
 }
 

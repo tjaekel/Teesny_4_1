@@ -9,15 +9,15 @@
 - ETH HTTPD server - up and running (port 80)
 - code to run SPI also as slave (as compile option, speed limited to 20 Mbps)
 - initialize and use SD Card (from command line): "sdinit 1"
-- start TFTP from command line, via "tftp 1" - FIX IT!
+- start TFTP on init, running in background, needs "sdinit 1" first
 - Pico-C: C-code command line interpreter (write C-code without a compiler)
 - GPIO interrupt: ISR triggers a handler thread to do all stuff outside INT contenxt
 
 ## Work Items
 - add TFTP to/from SD Card via ETH - DONE<br>
   activate from UART command line via "tftp", run TFTP as a thread (in background, not blocking UART command line)<br>
-  change tftp_server to QNEthernet - FIX IT!
-- add Pico-C (C-code interpreter, usi:wng EXTMEN for scripts) - DONE<br>
+  change tftp_server to QNEthernet - DONE
+- add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
   activate from UART command line via "picoc", works
 - add HTTPD server web page, with forms to enter commands in Web Browser - DONE 
   (no need for Telnet)<br>
@@ -30,10 +30,10 @@ You have to have 2x QSPI RAM chip soldered, otherwise disable Pico-C and do not 
 
 ## Python Script
 A Python script to use server on port 80 is added: fire MCU commands from
-an interactrive Python command loop (like TELNET).<br>
+an interactive Python command loop (like TELNET).<br>
 Modify the IP address in Python script for your MCU (DHCP is used - different IP address).<br>
-The port 80 is based on QNEthernet TCP server (as native TCP server), running as a TeensyThread.<br>
-Python can send HTTP (TEXT) requests or BINARY (with command length field).
+The port 80 is based on QNEthernet TCP server (as native TCP server), running as a FreeRTOS thread.<br>
+Python can send HTTP (TEXT) requests or BINARY (with command and length field).
 
 ## Prerequisites
 This project uses now FreeRTOS, not TeensyThreads anymore! (needed for GPIO interrupts without polling)

@@ -39,7 +39,10 @@ void setup(void) {
 
     VCP_UART_setup();
 
+    /* start in thios order: network openened first and reused afterwards */
     TCP_Server_setup();   //works with FreeRTOS
+
+    TFTP_setup(UART_OUT);
 
     SPI_setup();
 

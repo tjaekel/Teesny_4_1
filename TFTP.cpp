@@ -1,14 +1,16 @@
 
+#include "arduino_freertos.h"
+#include "avr/pgmspace.h"
+#include <climits>
+
 #include <SD.h>
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
-#include <TeensyThreads.h>
 #include "VCP_UART.h"
 #include "tftp_server.h"
 
 using namespace qindesign::network;
 
-int TFTPid  = 0;
 File file;
 
 // file interface
@@ -33,7 +35,6 @@ void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
   }
   else return NULL;
 
-  //return f;
   return (void *)fname;
 }
 
@@ -80,14 +81,16 @@ static void teensyMAC(uint8_t *mac)
 }
 #endif
 
-extern void tftp_thread(void);
+extern void tftp_thread(void *pvParameters);
 /*const*/ tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };
 
 void TFTP_setup(EResultOut out) {
+#if 0
   if (!SD.begin(BUILTIN_SDCARD)) {
-    UART_printString("*E: SD card failed", out);
+    UART_printString("*E: SD card failed\r\n", out);
     return;
   }
+#endif
 
 #if 0
   //if not yet done by HTTP_server
@@ -103,17 +106,5 @@ void TFTP_setup(EResultOut out) {
     print_log(out, "*I: IP address: %ld.%ld.%ld.%ld\r\n", (rawAddr >> 0) & 0xFF, (rawAddr >> 8) & 0xFF, (rawAddr >> 16) & 0xFF, (rawAddr >> 24) & 0xFF);
   }
   
-  ////tftp_init(&tftp_ctx);     //not as thread
-  TFTPid = threads.addThread(tftp_thread, 0, 2048);
-}
-
-void TFTP_kill(void) {
-  if (TFTPid) {
-    threads.kill(TFTPid);
-
-    //close UDP socket? - it should stop on next Udp.begin()
-    tftp_kill();
-    TFTPid = 0;
-  }
-
+  ::xTaskCreate(tftp_thread, "tftp_thread", 1024, nullptr, 1, nullptr);
 }
