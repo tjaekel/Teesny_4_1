@@ -1,9 +1,14 @@
 
 /* we use TEXTAREA: copy first part, add variable part, append second part */
 const char data_html_a[] /*__attribute__((aligned(4)))*/ =
-"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\r\n\
+"HTTP/1.1 200 OK\r\n\
+Connection: close\r\n\
+Content-Type: text/html\r\n\
+\r\n\
+<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\r\n\
 <html xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w=\"urn:schemas-microsoft-com:office:word\" xmlns=\"http://www.w3.org/TR/REC-html40\">\r\n\
 <head>\r\n\
+<link rel=\"icon\" href=\"data:,\">\r\n\
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\r\n\
 <title>TeensySPIder</title>\r\n\
 <style>\r\n\

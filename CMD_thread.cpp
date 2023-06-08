@@ -1,8 +1,11 @@
 
+#include "arduino_freertos.h"
+#include "avr/pgmspace.h"
+#include <climits>
+
 #include "VCP_UART.h"
 #include "cmd_dec.h"
 #include "CMD_thread.h"
-#include <TeensyThreads.h>
 
 void CMD_loop(void) {
 #if 1
@@ -14,15 +17,15 @@ void CMD_loop(void) {
     VCP_UART_printPrompt();
   }
   else {
-    threads.delay(1);
+    vTaskDelay(1);
   }
 #else
   Serial.println("*");
 #endif
 }
 
-void CMD_thread(void) {
-  VCP_UART_putString("---- Teensy FW: V1.0.0 ----");
+void CMD_thread(void *pvParameters) {
+  VCP_UART_putString("---- Teensy FW: V1.1.0 ----");
   VCP_UART_printPrompt();
 
   while (1) {
@@ -36,11 +39,10 @@ void CMD_setup(void) {
     delay(10);
   }
             
-  threads.addThread(CMD_thread, 0, THREAD_STACK_SIZE);
+  ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE, nullptr, 2, nullptr);
 }
 
 /* helper functions */
 void CMD_delay(int ms) {
-  threads.delay(ms);
-  ////threads.yield();
+  vTaskDelay(ms);
 }

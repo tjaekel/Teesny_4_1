@@ -17,7 +17,7 @@ else :
     defaultHostIPaddress = "192.168.0.84"    #my DHCP I get
 
 ##TCPport = 80                #the port for commands, web browser HTTP request port
-TCPport = 8080
+TCPport = 80
 maxTCPLen = 64*4*1024       #the maximum expected packet length (same or larger as largest response)
 
 #the maximum TCP packet size the MCU can handle is: 64*4*1024 +32 (with the 4 byte header),

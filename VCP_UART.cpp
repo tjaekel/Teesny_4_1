@@ -1,10 +1,11 @@
 
 #include "VCP_UART.h"
-#include <TeensyThreads.h>
+#include "arduino_freertos.h"
+#include "avr/pgmspace.h"
 
-/* marked as experimental but we need */
-ThreadWrap(Serial, SerialXtra);
-#define Serial ThreadClone(SerialXtra)
+/* TODO:
+ * ad a semaphore/mutex around Serial.print
+ */
 
 static char UARTbuffer[80];
 static size_t numAvail = 0;
@@ -63,8 +64,7 @@ char* VCP_UART_getString(void)
         }
     }
 
-    threads.delay(1);
-    ////threads.yield();
+    vTaskDelay(1);
     return NULL;
 }
 
@@ -79,7 +79,7 @@ void VCP_UART_printPrompt(void) {
 
 void VCP_UART_hexDump(unsigned char* b, int len) {
     while (len--) {
-        Serial.print(*b++, HEX);
+        Serial.print(*b++, arduino::HEX);
         Serial.print(" ");
     }
 }
@@ -180,8 +180,7 @@ int UART_getString(unsigned char *b, size_t l)
         }
     }
 
-    threads.delay(1);
-    ////threads.yield();
+    vTaskDelay(1);
     return 0;
 }
 
@@ -190,8 +189,8 @@ int UART_getChar(void) {
     if (Serial.available() > 0) {
       return Serial.read();
     }
-    threads.delay(1);
-    ////threads.yield();
+
+    vTaskDelay(1);
   }
 }
 

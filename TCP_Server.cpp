@@ -1,28 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2021-2023 Shawn Silverman <shawn@pobox.com>
-// SPDX-License-Identifier: MIT
 
-// ServerWithListeners demonstrates how to use listeners to start and
-// stop services. Do some testing, then connect the Teensy to an
-// entirely different network by moving the Ethernet connection and
-// the program will still work.
-//
-// This also demonstrates:
-// 1. Using a link state listener,
-// 2. Setting a static IP if desired,
-// 3. Managing connections and attaching state to each connection,
-// 4. How to use `printf`,
-// 5. Very rudimentary HTTP server behaviour,
-// 6. Client timeouts, and
-// 7. Use of a half closed connection.
-//
-// This is a rudimentary basis for a complete server program.
-//
-// Note that the configuration code and logic is just for illustration.
-// Your program doesn't need to include everything here.
-//
-// This file is part of the QNEthernet library.
-
-// C++ includes
 #include <algorithm>
 #include <cstdio>
 #include <utility>
@@ -30,18 +6,20 @@
 
 #include <QNEthernet.h>
 
-#include <TeensyThreads.h>
+#include "arduino_freertos.h"
+#include "avr/pgmspace.h"
+#include <climits>
 
 #include "cmd_dec.h"
 #include "VCP_UART.h"
+
+#include "HTTP_data.cpp"
 
 using namespace qindesign::network;
 
 // --------------------------------------------------------------------------
 //  Configuration
 // --------------------------------------------------------------------------
-
-// NOTE: Not all the code here is needed
 
 // The DHCP timeout, in milliseconds. Set to zero to not wait and
 // instead rely on the listener to inform us of an address assignment.
@@ -51,7 +29,7 @@ constexpr uint32_t kDHCPTimeout = 15000;  // 15 seconds
 // instead rely on the listener to inform us of a link.
 constexpr uint32_t kLinkTimeout = 5000;  // 5 seconds
 
-constexpr uint16_t kServerPort = 8080;
+constexpr uint16_t kServerPort = 80;
 
 // Timeout for waiting for input from the client.
 constexpr uint32_t kClientTimeout = 5000;  // 5 seconds
@@ -62,9 +40,9 @@ constexpr uint32_t kShutdownTimeout = 30000;  // 30 seconds
 
 // Set the static IP to something other than INADDR_NONE (zero)
 // to not use DHCP. The values here are just examples.
-IPAddress staticIP{0, 0, 0, 0};//{192, 168, 1, 101};
+IPAddress staticIP{0, 0, 0, 0};
 IPAddress subnetMask{255, 255, 255, 0};
-IPAddress gateway{192, 168, 1, 1};
+IPAddress gateway{192, 168, 0, 1};
 
 // --------------------------------------------------------------------------
 //  Types
@@ -101,15 +79,14 @@ std::vector<ClientState> clients;
 EthernetServer TCPserver{kServerPort};
 
 // --------------------------------------------------------------------------
-//  Main Program
+//  Thead Implementation
 // --------------------------------------------------------------------------
 
-static void TCP_Server_thread(void);
+static void TCP_Server_thread(void *pvParameters);
 
 // Forward declarations
 void tellServer(bool hasIP, bool linkState);
 
-// Program setup.
 void TCP_Server_setup(void) {
 #if 0
   Serial.begin(115200);
@@ -117,14 +94,14 @@ void TCP_Server_setup(void) {
     // Wait for Serial
   }
 #endif
-  printf("Starting...\r\n");
+  print_log(UART_OUT, "Starting...\r\n");
 
   // Unlike the Arduino API (which you can still use), QNEthernet uses
   // the Teensy's internal MAC address by default, so we can retrieve
   // it here
   uint8_t mac[6];
   Ethernet.macAddress(mac);  // This is informative; it retrieves, not sets
-  printf("MAC = %02x:%02x:%02x:%02x:%02x:%02x\r\n",
+  print_log(UART_OUT, "MAC = %02x:%02x:%02x:%02x:%02x:%02x\r\n",
          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   // Add listeners
@@ -133,7 +110,7 @@ void TCP_Server_setup(void) {
 
   // Listen for link changes
   Ethernet.onLinkState([](bool state) {
-    printf("[Ethernet] Link %s\r\n", state ? "ON" : "OFF");
+    print_log(UART_OUT, "[Ethernet] Link %s\r\n", state ? "ON" : "OFF");
   });
 
   // Listen for address changes
@@ -141,19 +118,19 @@ void TCP_Server_setup(void) {
     IPAddress ip = Ethernet.localIP();
     bool hasIP = (ip != INADDR_NONE);
     if (hasIP) {
-      printf("[Ethernet] Address changed:\r\n");
+      print_log(UART_OUT, "[Ethernet] Address changed:\r\n");
 
-      printf("    Local IP = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      print_log(UART_OUT, "    Local IP = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
       ip = Ethernet.subnetMask();
-      printf("    Subnet   = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      print_log(UART_OUT, "    Subnet   = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
       ip = Ethernet.gatewayIP();
-      printf("    Gateway  = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      print_log(UART_OUT, "    Gateway  = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
       ip = Ethernet.dnsServerIP();
       if (ip != INADDR_NONE) {  // May happen with static IP
-        printf("    DNS      = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        print_log(UART_OUT, "    DNS      = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
       }
     } else {
-      printf("[Ethernet] Address changed: No IP address\r\n");
+      print_log(UART_OUT, "[Ethernet] Address changed: No IP address\r\n");
     }
 
     // Tell interested parties the state of the IP address and link,
@@ -165,9 +142,9 @@ void TCP_Server_setup(void) {
   });
 
   if (staticIP == INADDR_NONE) {
-    printf("Starting Ethernet with DHCP...\r\n");
+    print_log(UART_OUT, "Starting Ethernet with DHCP...\r\n");
     if (!Ethernet.begin()) {
-      printf("Failed to start Ethernet\r\n");
+      print_log(UART_OUT, "Failed to start Ethernet\r\n");
       return;
     }
 
@@ -175,27 +152,27 @@ void TCP_Server_setup(void) {
     // when an address has been assigned
     if (kDHCPTimeout > 0) {
       if (!Ethernet.waitForLocalIP(kDHCPTimeout)) {
-        printf("Failed to get IP address from DHCP\r\n");
+        print_log(UART_OUT, "Failed to get IP address from DHCP\r\n");
         // We may still get an address later, after the timeout,
         // so continue instead of returning
       }
     }
   } else {
-    printf("Starting Ethernet with static IP...\r\n");
+    print_log(UART_OUT, "Starting Ethernet with static IP...\r\n");
     Ethernet.begin(staticIP, subnetMask, gateway);
 
     // When setting a static IP, the address is changed immediately,
     // but the link may not be up; optionally wait for the link here
     if (kLinkTimeout > 0) {
       if (!Ethernet.waitForLink(kLinkTimeout)) {
-        printf("Failed to get link\r\n");
+        print_log(UART_OUT, "Failed to get link\r\n");
         // We may still see a link later, after the timeout, so
         // continue instead of returning
       }
     }
   }
 
-  threads.addThread(TCP_Server_thread, 0, 2048);
+  ::xTaskCreate(TCP_Server_thread, "TCP_Server_thread", 1024, nullptr, 1, nullptr);
 }
 
 // Tell the server there's been an IP address or link state change.
@@ -205,23 +182,23 @@ void tellServer(bool hasIP, bool linkState) {
   if (hasIP && linkState) {
     if (TCPserver) {
       // Optional
-      printf("Address changed: Server already started\r\n");
+      print_log(UART_OUT, "Address changed: Server already started\r\n");
     } else {
-      printf("Starting server on port %u...", kServerPort);
+      print_log(UART_OUT, "Starting server on port %u...", kServerPort);
       fflush(stdout);  // Print what we have so far if line buffered
       TCPserver.begin();
-      printf("%s\r\n", TCPserver ? "done." : "FAILED!");
+      print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
     }
   } else {
     // Stop the server if there's no IP address
     if (!TCPserver) {
       // Optional
-      printf("Address changed: Server already stopped\r\n");
+      print_log(UART_OUT, "Address changed: Server already stopped\r\n");
     } else {
-      printf("Stopping server...");
+      print_log(UART_OUT, "Stopping server...");
       fflush(stdout);  // Print what we have so far if line buffered
       TCPserver.end();
-      printf("done.\r\n");
+      print_log(UART_OUT, "done\r\n");
     }
   }
 }
@@ -262,8 +239,21 @@ void processClientBinary(ClientState &state, uint8_t *buf, int avail) {
   }
 }
 
-// The simplest possible (very non-compliant) HTTP server. Respond to
-// any input with an HTTP/1.1 response.
+void convertURL(char *s) {
+  /* convert + to space, convert %20 to a single space
+   * it modifies the input string
+   * '+' is used on "GET /?CMD="
+   * %20 is used when entered as URL
+   */
+  while (*s) {
+    if (*s == '+')
+      *s = ' ';
+    s++;
+
+    //for %20 we need two pointers and move the tail forward, or create a buffer for output
+  }
+}
+
 void processClientData(ClientState &state) {
   // Loop over available data until an empty line or no more data
   // Note that if emptyLine starts as false then this will ignore any
@@ -284,60 +274,82 @@ void processClientData(ClientState &state) {
 
   //append a NUL for printf
   *(rxBuf + avail) = '\0';
-  printf("|%s|\r\n", rxBuf);
+  //DEBUG:
+  //print_log(UART_OUT, "|%s|\r\n", rxBuf);
 
-  IPAddress ip = state.client.remoteIP();
-  printf("Sending to client: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-#if 0
-  state.client.writeFully(/*"HTTP/1.1 200 OK\r\n"
-                          "Connection: close\r\n"
-                          "Content-Type: text/plain\r\n"
-                          "\r\n"*/
-                          "Hello, Client!\r\n\003");
-#else
-  /* take the command:
-   * if it starts with an ASCII character - we have an ASCII command line string,
-   * if < 0x20 - it is a binary command
-   * process it accordingly and send the related respond (ASCII vs. binary)
-   * if ASCII command - close the connection, for binary: keep it open!
-   */
 
-   CMD_DEC_execute((char *)rxBuf, HTTPD_OUT);
-   {
-    int l;
-    char *b;
-    HTTP_PutEOT();                    //place EOT into buffer
-    l = HTTP_GetOut(&b);
-    if (l)
-      state.client.writeFully(b);
-    HTTP_ClearOut();
+  //DEBUG:
+  //IPAddress ip = state.client.remoteIP();
+  //print_log(UART_OUT, "Sending to client: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+
+  {
+    char *s;
+    //place NUL after command string (strip of "HTML")
+    s = strstr((char *)rxBuf, " HTTP");
+    if (s)
+      *s = '\000';
+    
+    //check if we are called with "GET /?CMD=" and take the string afterwards
+    s = strstr((char *)rxBuf, "GET /?CMD=");
+    if (s)
+    {
+      s += 10;
+      convertURL(s);
+      CMD_DEC_execute(s, HTTPD_OUT);
+    }
+    else {
+      //we might have "GET/anyCommand"
+      s = strstr((char *)rxBuf, "GET /");
+      if (s) {
+        s += 5;
+        convertURL(s);
+        CMD_DEC_execute(s, HTTPD_OUT);
+      }
+    }
+
+    {
+      int l;
+      char *b;
+      l = HTTP_GetOut(&b);
+      state.client.writeFully(data_html_a);
+      if (l) {
+        state.client.writeFully(b);
+      }
+      HTTP_ClearOut();
+      state.client.writeFully(data_html_b);
+    }
   }
-#endif
+
   state.client.flush();
 
   // Half close the connection, per
   // [Tear-down](https://datatracker.ietf.org/doc/html/rfc7230#section-6.6)
   state.client.closeOutput();
-  state.closedTime = millis();
   state.outputClosed = true;
+
+  vTaskDelay(1);
+  state.client.close();
+  state.closed = true;
+
+  state.closedTime = millis();
 }
 
 // Main program loop.
-static void TCP_Server_thread(void) {
+static void TCP_Server_thread(void *pvParameters) {
   while (1) {
-    threads.delay(1);
+    vTaskDelay(1);
   EthernetClient client = TCPserver.accept();
   if (client) {
     // We got a connection!
     IPAddress ip = client.remoteIP();
-    printf("Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+    print_log(UART_OUT, "Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
     clients.emplace_back(std::move(client));
-    printf("Client count: %zu\r\n", clients.size());
+    print_log(UART_OUT, "Client count: %zu\r\n", clients.size());
   }
 
   // Process data from each client
   for (ClientState &state : clients) {  // Use a reference so we don't copy
-    threads.delay(1);
+    vTaskDelay(1);
     if (!state.client.connected()) {
       state.closed = true;
       continue;
@@ -349,7 +361,7 @@ static void TCP_Server_thread(void) {
     if (state.outputClosed) {
       if (millis() - state.closedTime >= kShutdownTimeout) {
         IPAddress ip = state.client.remoteIP();
-        printf("Client shutdown timeout: %u.%u.%u.%u\r\n",
+        print_log(UART_OUT, "Client shutdown timeout: %u.%u.%u.%u\r\n",
                ip[0], ip[1], ip[2], ip[3]);
         state.client.close();
         state.closed = true;
@@ -359,7 +371,7 @@ static void TCP_Server_thread(void) {
     else {
       if (millis() - state.lastRead >= kClientTimeout) {
         IPAddress ip = state.client.remoteIP();
-        printf("Client timeout: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        print_log(UART_OUT, "Client timeout: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
         state.client.close();
         state.closed = true;
         continue;
@@ -376,8 +388,12 @@ static void TCP_Server_thread(void) {
                                [](const auto &state) { return state.closed; }),
                 clients.end());
   if (clients.size() != size) {
-    printf("New client count: %zu\r\n", clients.size());
+    print_log(UART_OUT, "New client count: %zu\r\n", clients.size());
   }
 
   }
+}
+
+uint32_t HTTPD_GetIPAddress(void) {
+  return Ethernet.localIP();
 }

@@ -14,6 +14,7 @@
 #include "SYS_config.h"
 #include "TFTP.h"
 #include "picoc.h"
+#include "GPIO.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -703,6 +704,8 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   }
 
   CFG_Print(out);
+
+  print_log(out, "INT cnt: %ld\r\n", GPIO_GetINTcounter());
 
   return CMD_DEC_OK;
 }
