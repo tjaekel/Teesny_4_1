@@ -20,6 +20,7 @@
 #include "MEM_Pool.h"
 #include "CMD_thread.h"
 #include "GPIO.h"
+#include "UDP_send.h"
 
 void setup(void) {
 
@@ -39,10 +40,11 @@ void setup(void) {
 
     VCP_UART_setup();
 
-    /* start in thios order: network openened first and reused afterwards */
-    TCP_Server_setup();   //works with FreeRTOS
-
+    /* ---- start in this order: network openened first and reused afterwards */
+    TCP_Server_setup();
     TFTP_setup(UART_OUT);
+    UDP_setup();
+    /* ---- */
 
     SPI_setup();
 

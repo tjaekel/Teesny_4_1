@@ -14,6 +14,7 @@
 #include "SYS_config.h"
 #include "picoc.h"
 #include "GPIO.h"
+#include "UDP_send.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -42,6 +43,10 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
 
 ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
+
+ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out);
+
+ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out);
 
 const TCMD_DEC_Command Commands[] = {
 		{
@@ -125,9 +130,19 @@ const TCMD_DEC_Command Commands[] = {
 				.func = CMD_ipaddr
 		},
     {
+				.cmd = (const char*)"udpip",
+				.help = (const char*)"set host UDP address",
+				.func = CMD_udpip
+		},
+    {
 				.cmd = (const char*)"picoc",
 				.help = (const char*)"start Pico-C interpreter",
 				.func = CMD_picoc
+		},
+    {
+				.cmd = (const char*)"udptest",
+				.help = (const char*)"test: send UDP packet",
+				.func = CMD_udptest
 		},
 };
 
@@ -723,6 +738,31 @@ ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results *res, EResultOut out)
 {
 	SDCARD_PrintFile(res->str, out);
+
+	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out)
+{
+	UDP_test();
+
+	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out)
+{
+	(void)out;
+	unsigned long ip[4] = {0, 0, 0, 0};
+	unsigned long ipAddr = 0;
+
+  if (res->str) {
+	  sscanf(res->str, "%lu.%lu.%lu.%lu", &ip[0], &ip[1], &ip[2], &ip[3]);
+	  ipAddr  = ip[0];
+	  ipAddr |= ip[1] << 8;
+	  ipAddr |= ip[2] << 16;
+	  ipAddr |= ip[3] << 24;
+  }
+	UDP_setHostIP(ipAddr);
 
 	return CMD_DEC_OK;
 }

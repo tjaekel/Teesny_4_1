@@ -13,17 +13,7 @@
 - Pico-C: C-code command line interpreter (write C-code without a compiler)
 - GPIO interrupt: ISR triggers a handler thread to do all stuff outside INT context<br>
   call an (optional) set INT handler in Pico-C
-
-## Work Items
-- add TFTP to/from SD Card via ETH - DONE
-- add Pico-C (C-code interpreter, using EXTMEN for scripts) - DONE<br>
-  launch from UART command line via "picoc"
-- Pico-C: break endless loops, via CTRL-C on UART - DONE
-- Pico-C INT handler - triggered by GPIO interrupt - DONE
-- add HTTPD server web page, with forms to enter commands in Web Browser - DONE 
-  (no need for Telnet: use Pythong for a network command session)<br>
-  use QNEthernet: one instance (port 80), usable from Python (in BINARY mode) and WebBrowser (TEXT mode) - DONE
-- a second SPI, a shared SPI (same bus with two PCS/SS signals) - TODO
+- send UDP packet, with a 16bit counter, send UDP data in INT handler (e.g. a FIFO drained)
 
 ## Pico-C needs EXTMEM
 ATTENTION: the Pico-C "picoc" uses the external QSPI memory (not flash, both as RAM, 16 MB)<br>
@@ -41,4 +31,11 @@ This project uses now FreeRTOS, not TeensyThreads anymore! (needed for GPIO inte
 You have to install the ZIP library:<br>
 see and get from here:<br>
 https://github.com/tsandmann/freertos-teensy
+
+## How to use?
+When compiled and flashed, open UART terminal (any baudrate is fine)<br>
+enter command "help" and see implemented commands (or: help(); inside Pico-C)
+
+## Contact
+You can send me an email: tj@tjaekel.com
 
