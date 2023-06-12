@@ -25,6 +25,8 @@
 #include "picoc.h"       /** PICOC prototypes and type definitions */
 #include "printf.h"      /** \warning include printf.h necessary for printf. Don't inlcude stdio.h */
 
+#include "UDP_send.h"
+
 #if 0
 /* read a 32bit value from memory, param0 is address as LongInteger */
 void LibReadMem(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
@@ -337,6 +339,13 @@ void LibSetINThandler(struct ParseState *Parser, struct Value *ReturnValue, stru
 	strncpy(picoc_INThandlerCMD, Param[0]->Val->NativePointer, sizeof(picoc_INThandlerCMD) - 1);
 }
 
+void LibSetINThandler2(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	extern char picoc_INThandlerCMD2[MAX_SCRIPT_SIZE];
+
+	strncpy(picoc_INThandlerCMD2, Param[0]->Val->NativePointer, sizeof(picoc_INThandlerCMD2) - 1);
+}
+
 /*
  * UVM extensions
  */
@@ -473,6 +482,19 @@ void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Va
     ReturnValue->Val->Integer = retVal;
 }
 #endif
+
+void LibUDPSend(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Parser;
+    (void)NumArgs;
+
+    int retVal;
+    retVal = UDP_send(Param[0]->Val->Integer,
+                      Param[1]->Val->NativePointer,
+                      Param[2]->Val->LongInteger
+                     );
+    ReturnValue->Val->Integer = retVal;
+}
 
 #if 0
 void LibI2CWrite(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)

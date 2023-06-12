@@ -65,6 +65,9 @@ void LibPutGPIO(struct ParseState *Parser, struct Value *ReturnValue, struct Val
 
 void LibSetLED(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 void LibSetINThandler(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+void LibSetINThandler2(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+
+void LibUDPSend(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 
 /*
  * UVM extensions

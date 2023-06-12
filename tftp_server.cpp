@@ -79,16 +79,15 @@ void send_error(IPAddress host, int port, int code, char *msg) {
   Udp.beginPacket(host, port);
   Udp.write(pout, n);
   Udp.endPacket();
-  Serial.printf("error %d %s\n", code, msg);
+  ////Serial.printf("error %d %s\n", code, msg);
+  Serial.printf("%s\r\n", msg);
 }
-
 
 void resend() {
   Udp.beginPacket(tftp_state.addr, tftp_state.port);
   Udp.write(pout, send_lth);
   Udp.endPacket();
 }
-
 
 void send_ack(int blknum) {
   pktout[0] = swap2(TFTP_ACK);

@@ -445,6 +445,7 @@ void Initialise(void);
 void Cleanup(void);
 
 int picoc_INThandler(void);
+int picoc_INThandler2(void);
 
 void put_string(char *s);
 
@@ -459,8 +460,8 @@ void    picoc_ModifyInput(char *dst, char *src);
 extern int GpicocAbort;
 int     picoc_CheckForAbort(void);
 int     picoc_CheckForStopped(void);
-void	picoc_SetStopped(void);
-void 	picoc_ClearStopped(void);
+void	  picoc_SetStopped(void);
+void 	  picoc_ClearStopped(void);
 void    picoc_MsSleep(unsigned long ms);
 int     picoc_ExecuteCommand(char *s);
 int     picoc_SpiTransaction(unsigned char *tx, unsigned char *rx, int bytes);

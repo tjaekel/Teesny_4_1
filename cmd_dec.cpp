@@ -18,7 +18,9 @@
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out);
 
 ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out);
@@ -35,18 +37,13 @@ ECMD_DEC_Status CMD_i2cclk(TCMD_DEC_Results* res, EResultOut out);
 
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out);
-
 ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
-
 ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
-
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
-
 ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
-
 ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out);
-
 ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results *res, EResultOut out);
 
 const TCMD_DEC_Command Commands[] = {
 		{
@@ -54,10 +51,20 @@ const TCMD_DEC_Command Commands[] = {
 				.help = (const char *)"[cmd] list of all defined commands or help for cmd",
 				.func = CMD_help
 		},
+    {
+				.cmd = (const char *)"sysinfo",
+				.help = (const char *)"display version and systrem info",
+				.func = CMD_sysinfo
+		},
 		{
 				.cmd = (const char *)"print",
 				.help = (const char *)"print [-n] [rest of cmd]",
 				.func = CMD_print
+		},
+    {
+				.cmd = (const char *)"repeat",
+				.help = (const char *)"repeat cmd [-0|-n] endless or n times",
+				.func = CMD_repeat
 		},
     {
 				.cmd = (const char *)"delay",
@@ -116,13 +123,18 @@ const TCMD_DEC_Command Commands[] = {
 		},
 		{
 				.cmd = (const char*)"rawspi",
-				.help = (const char*)"send bytes via SPI <byte ...>",
+				.help = (const char*)"send bytes via SPI [-P|-A] <byte ...>",
 				.func = CMD_rawspi
 		},
 		{
 				.cmd = (const char*)"syscfg",
 				.help = (const char*)"print sys config parameters",
 				.func = CMD_syscfg
+		},
+    {
+				.cmd = (const char*)"pstat",
+				.help = (const char*)"display system counters [-P|-A]",
+				.func = CMD_pstat
 		},
     {
 				.cmd = (const char*)"ipaddr",
@@ -522,6 +534,16 @@ ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 	return CMD_DEC_OK;
 }
 
+ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
+{
+  int inUse, watermark, max;
+  print_log(out, "FW version : %s\r\n", VERSION_NUMBER);
+  MEM_PoolCounters(&inUse, &watermark, &max);
+  print_log(out, "MEMPool    : %d | %d | %d\r\n", inUse, watermark, max);
+
+  return CMD_DEC_OK;
+}
+
 ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out)
 {
 	if (res->str)
@@ -644,6 +666,12 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
 
   unsigned char *SPIbufTx, *SPIbufRx;
   unsigned long i;
+  int dev = 0;
+
+  if (res->opt) {
+    if (strncmp(res->opt, "-A", 2) == 0)
+      dev = 1;
+  }
 
   SPIbufTx = (unsigned char *)MEM_PoolAlloc(CMD_DEC_NUM_VAL);
   if (SPIbufTx) {
@@ -661,9 +689,15 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
   for (i = 0; i < res->num; i++)
     *(SPIbufTx + i) = (unsigned char)res->val[i];
 
-  SPI_transaction(0, SPIbufTx, SPIbufRx, res->num);
+  SPI_transaction(dev, SPIbufTx, SPIbufRx, res->num);
 
-  hex_dump((unsigned char *)SPIbufRx, res->num, 1, out);
+  ////hex_dump((unsigned char *)SPIbufRx, res->num, 1, out);
+  {
+    unsigned long i;
+    for (i = 0; i < res->num; i++) {
+      print_log(out, "%02x ", *(SPIbufRx + i));
+    }
+  }
 
   MEM_PoolFree(SPIbufTx);
   MEM_PoolFree(SPIbufRx);
@@ -712,7 +746,19 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
 
   CFG_Print(out);
 
-  print_log(out, "INT cnt: %ld\r\n", GPIO_GetINTcounter());
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
+  int dev = 0;
+
+  if (res->opt) {
+    if (strncmp(res->opt, "-A", 2) == 0)
+      dev = 1;
+  }
+
+  print_log(out, "INT cnt        : %ld\r\n", GPIO_GetINTcounter(dev));
+  print_log(out, "INT handled cnt: %ld\r\n", GPIO_GetINTHandledcounter(dev));
 
   return CMD_DEC_OK;
 }
@@ -763,6 +809,50 @@ ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out)
 	  ipAddr |= ip[3] << 24;
   }
 	UDP_setHostIP(ipAddr);
+
+	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out)
+{
+	int numRepeat = 1;			//default is 1
+	int endLess = 0;
+	char *keepStr;				  //remember the command(s) to repeat
+
+	if (res->opt)
+	{
+		if (*res->opt == '-')
+		{
+			sscanf((res->opt + 1), (const char *)"%i", &numRepeat);
+		}
+	}
+
+	if (numRepeat == 0)
+	{
+		endLess = 1;
+		numRepeat = 1;
+	}
+
+	keepStr = res->str;			//remember the rest of string as commands(s)
+
+	/* loop numRepeat times to repeat the commands(s) */
+	do
+	{
+		/* check UART reception - any received character will break the loop */
+		if (UART_getCharNW())
+			break;				//break loop with any UART Rx received */
+
+		/* call the command interpreter - one recursive step deeper */
+		CMD_DEC_execute(keepStr, out);
+
+		/* if numRepeat is 0 - we do it endless */
+		if (endLess)
+			continue;
+		else
+			numRepeat--;
+	} while (numRepeat);
+
+	res->ctl = 1;			//break the outer command interpreter, we can have ';', done here
 
 	return CMD_DEC_OK;
 }

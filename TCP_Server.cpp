@@ -174,7 +174,7 @@ void TCP_Server_setup(void) {
     }
   }
 
-  ::xTaskCreate(TCP_Server_thread, "TCP_Server_thread", THREAD_STACK_SIZE_HTTPD, nullptr, 1, nullptr);
+  ::xTaskCreate(TCP_Server_thread, "TCP_Server_thread", THREAD_STACK_SIZE_HTTPD, nullptr, THREAD_PRIO_HTTPD, nullptr);
 }
 
 // Tell the server there's been an IP address or link state change.

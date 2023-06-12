@@ -15,4 +15,6 @@ void MEM_PoolFree(void *mem);
 }
 #endif
 
+void MEM_PoolCounters(int *inUse, int *watermark, int *max);
+
 #endif

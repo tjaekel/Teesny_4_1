@@ -863,7 +863,10 @@ const struct LibraryFunction CLibrary[] =
 	  { LibSetLED,       	"void SetLED(int,int);" },
 #endif
 
-	  { LibSetINThandler,	"void SetINTHandler(char *);" },
+    { LibUDPSend,      "int UDPsend(int port,unsigned char *,unsigned long);" },
+
+	  { LibSetINThandler,	  "void SetINTHandler(char *);" },
+    { LibSetINThandler2,  "void SetINTHandler2(char *);" },
 
     { LibMethodSize,    "int size();"},	//use as: variable.size() - returns number of elements for arrays
 

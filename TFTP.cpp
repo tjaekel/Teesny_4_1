@@ -108,5 +108,5 @@ void TFTP_setup(EResultOut out) {
     print_log(out, "*I: IP address: %ld.%ld.%ld.%ld\r\n", (rawAddr >> 0) & 0xFF, (rawAddr >> 8) & 0xFF, (rawAddr >> 16) & 0xFF, (rawAddr >> 24) & 0xFF);
   }
   
-  ::xTaskCreate(tftp_thread, "tftp_thread", THREAD_STACK_SIZE_TFTP, nullptr, 1, nullptr);
+  ::xTaskCreate(tftp_thread, "tftp_thread", THREAD_STACK_SIZE_TFTP, nullptr, THREAD_PRIO_TFTP, nullptr);
 }

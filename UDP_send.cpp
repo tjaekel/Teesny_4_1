@@ -7,6 +7,7 @@
 #include <QNEthernetUDP.h>
 
 #include "VCP_UART.h"
+#include "UDP_send.h"
 
 using namespace qindesign::network;
 
@@ -19,20 +20,16 @@ void UDP_setup(void) {
   /* nothing to do QNEthernet, TFTP, already up and running */
 }
 
-bool UDP_send(int port, uint8_t *pout, size_t n) {
-  bool r = false;
+int UDP_send(int port, uint8_t *pout, size_t n) {
+  int r = 0;
   uint32_t ip = udpHost;
 
   if (ip) {
-    size_t l;
     UdpSend.beginPacket(udpHost, port);
     UdpSend.write((const char *)&UDPcnt, sizeof(UDPcnt));
     UDPcnt++;     //increment the counter
-    l = UdpSend.write(pout, n);
+    r = (int)UdpSend.write(pout, n);
     UdpSend.endPacket();
-
-    if (l == n)
-      r = true;
 
     return r;
   }

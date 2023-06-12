@@ -11,6 +11,7 @@
 #define  VERSION_STR  "3.2"
 
 char picoc_INThandlerCMD[MAX_SCRIPT_SIZE] = {'\0'};
+char picoc_INThandlerCMD2[MAX_SCRIPT_SIZE] = {'\0'};
 static int picoc_IsRunning = 0;
 
 /* initialize everything */
@@ -99,7 +100,27 @@ int picoc_INThandler(void)
 		strLen = strlen((char *)SourceStr);
 		if (strLen)
 		{
-			Parse("INT", (char *)SourceStr, strLen, TRUE);
+			Parse("INT0", (char *)SourceStr, strLen, TRUE);
+			return 1;
+		}
+		return 0;
+	}
+	else
+		return 0;
+}
+
+int picoc_INThandler2(void)
+{
+	if (picoc_IsRunning)
+	{
+		unsigned char *SourceStr;
+		long strLen;
+
+		SourceStr = (unsigned char *)picoc_INThandlerCMD2;
+		strLen = strlen((char *)SourceStr);
+		if (strLen)
+		{
+			Parse("INT1", (char *)SourceStr, strLen, TRUE);
 			return 1;
 		}
 		return 0;

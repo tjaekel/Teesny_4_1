@@ -13,7 +13,7 @@
 - Pico-C: C-code command line interpreter (write C-code without a compiler)
 - GPIO interrupt: ISR triggers a handler thread to do all stuff outside INT context<br>
   call an (optional) set INT handler in Pico-C
-- send UDP packet, with a 16bit counter, send UDP data in INT handler (e.g. a FIFO drained)
+- send UDP packet, with a 16bit counter, send UDP data in Pico-C INT handler (e.g. a FIFO drained)
 
 ## Pico-C needs EXTMEM
 ATTENTION: the Pico-C "picoc" uses the external QSPI memory (not flash, both as RAM, 16 MB)<br>

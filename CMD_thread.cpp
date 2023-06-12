@@ -41,7 +41,7 @@ void CMD_setup(void) {
     delay(10);
   }
             
-  ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE_CMD, nullptr, 2, nullptr);
+  ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE_CMD, nullptr, THREAD_PRIO_CMD, nullptr);
 }
 
 /* helper functions */
