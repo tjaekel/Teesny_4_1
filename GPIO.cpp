@@ -1,8 +1,8 @@
 
 #include <Arduino.h>
 
-#include "arduino_freertos.h"
-#include "avr/pgmspace.h"
+#include <arduino_freertos.h>
+#include <avr/pgmspace.h>
 #include <climits>
 
 #include "VCP_UART.h"
@@ -79,7 +79,7 @@ unsigned long GPIO_GetINTHandledcounter(int num) {
 }
 
 void GPIO_thread1(void *pvParameters) {
-  uint32_t ulNotifiedValue;
+  uint32_t ulNotifiedValue = 1;
   //we have to tell who is the receiver of the notifification, here: our own thread
   xTaskToNotify[0] = xTaskGetCurrentTaskHandle();
 

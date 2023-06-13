@@ -15,6 +15,7 @@
 #include "picoc.h"
 #include "GPIO.h"
 #include "UDP_send.h"
+#include "TCP_Server.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -537,9 +538,10 @@ ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
 {
   int inUse, watermark, max;
-  print_log(out, "FW version : %s\r\n", VERSION_NUMBER);
+  print_log(out, "FW version   : %s\r\n", VERSION_NUMBER);
   MEM_PoolCounters(&inUse, &watermark, &max);
-  print_log(out, "MEMPool    : %d | %d | %d\r\n", inUse, watermark, max);
+  print_log(out, "MEMPool      : %d | %d | %d\r\n", inUse, watermark, max);
+  print_log(out, "HTTP clients : %d\r\n", HTTPD_GetClientNumber());
 
   return CMD_DEC_OK;
 }

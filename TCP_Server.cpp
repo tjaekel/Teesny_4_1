@@ -277,8 +277,7 @@ void processClientData(ClientState &state) {
   //append a NUL for printf
   *(rxBuf + avail) = '\0';
   //DEBUG:
-  //print_log(UART_OUT, "|%s|\r\n", rxBuf);
-
+  print_log(UART_OUT, "|%s|\r\n", rxBuf);
 
   //DEBUG:
   //IPAddress ip = state.client.remoteIP();
@@ -397,4 +396,8 @@ static void TCP_Server_thread(void *pvParameters) {
 
 uint32_t HTTPD_GetIPAddress(void) {
   return Ethernet.localIP();
+}
+
+unsigned int HTTPD_GetClientNumber(void) {
+  return clients.size();
 }

@@ -12,11 +12,15 @@
 #define THREAD_STACK_SIZE_GPIO        (2*1024)
 #define THREAD_STACK_SIZE_HTTPD       (1*1024)
 #define THREAD_STACK_SIZE_TFTP        (1*1024)
+#define THREAD_STACK_SIZE_UDP         (1*1024)
 
 #define THREAD_PRIO_CMD               1
 #define THREAD_PRIO_GPIO              3
 #define THREAD_PRIO_HTTPD             2
 #define THREAD_PRIO_TFTP              1
+#define THREAD_PRIO_UDP               1
+
+#include "VCP_UART.h"
 
 /* ---------- flash sys_cfg ---------------- */
 

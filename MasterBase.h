@@ -2,12 +2,12 @@
 #define ARDUINO_TEENSY_DMA_SPI_MASTER_BASE_H
 
 #include <Arduino.h>
+
 #include <util/atomic.h>
 #include <SPI.h>
 #include <DMAChannel.h>
 #include <deque>
 #include "Constants.h"
-
 
 ARDUINO_TEENSY_DMA_SPI_NAMESPACE_BEGIN
 
@@ -103,8 +103,18 @@ public:
 
     void yield()
     {
+        uint32_t ulNotifiedValue = 1;
         while(1)
-        {
+        { 
+            //wait for Interrupt
+            {
+              ::xTaskNotifyWaitIndexed( 0,                /* Wait for 0th notification. */
+                              0x00,             /* Don't clear any notification bits on entry. */
+                              ULONG_MAX,        /* Reset the notification value to 0 on exit. */
+                              &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+                              portMAX_DELAY );  /* Block indefinitely. */
+            }
+
             bool b = false;
             ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
             {

@@ -7,6 +7,7 @@ void UDP_setHostIP(unsigned long ipAddr);
 
 void UDP_test(void);
 
+//needed by Pico-C : as C-code
 #ifdef __cplusplus
 extern "C" {
 #endif

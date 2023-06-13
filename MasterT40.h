@@ -4,13 +4,13 @@
 
 #include "MasterBase.h"
 
+static TaskHandle_t xTaskToNotify[3] = {NULL, NULL};
+
 inline void tsydmaspi_rxisr_0();
 inline void tsydmaspi_rxisr_1();
 inline void tsydmaspi_rxisr_2();
 
-
 ARDUINO_TEENSY_DMA_SPI_NAMESPACE_BEGIN
-
 
 struct Master0 : public MasterBase
 {
@@ -69,6 +69,9 @@ struct Master0 : public MasterBase
             Serial.println("[ERROR] create dma tx buffer failed");
             return false;
         }
+
+        xTaskToNotify[0] = xTaskGetCurrentTaskHandle();
+
         dmarx()->disable();
         dmarx()->source((volatile uint8_t &)IMXRT_LPSPI4_S.RDR);
         dmarx()->disableOnCompletion();
@@ -166,6 +169,9 @@ struct Master1 : public MasterBase
             Serial.println("[ERROR] create dma tx buffer failed");
             return false;
         }
+
+        //TODO: add taskID
+
         dmarx()->disable();
         dmarx()->source((volatile uint8_t &)IMXRT_LPSPI3_S.RDR);
         dmarx()->disableOnCompletion();
@@ -264,6 +270,9 @@ struct Master2 : public MasterBase
             Serial.println("[ERROR] create dma tx buffer failed");
             return false;
         }
+
+        //TODO: add taskID
+        
         dmarx()->disable();
         dmarx()->source((volatile uint8_t &)IMXRT_LPSPI1_S.RDR);
         dmarx()->disableOnCompletion();
@@ -316,18 +325,40 @@ inline void tsydmaspi_rxisr_0()
 {
     TsyDMASPI0.dmarx()->clearInterrupt();
     TsyDMASPI0.next();
+
+#if 1
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    //release waiting thread:
+    /* At this point xTaskToNotify should not be NULL as a transmission was
+     in progress. */
+    configASSERT(xTaskToNotify[0] != NULL );
+
+    /* Notify the task that the transmission is complete. */
+    vTaskNotifyGiveIndexedFromISR(xTaskToNotify[0], 0, &xHigherPriorityTaskWoken );
+
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+    should be performed to ensure the interrupt returns directly to the highest
+    priority task.  The macro used for this purpose is dependent on the port in
+    use and may be called portEND_SWITCHING_ISR(). */
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken );
+#endif
 }
 
 inline void tsydmaspi_rxisr_1()
 {
     TsyDMASPI1.dmarx()->clearInterrupt();
     TsyDMASPI1.next();
+
+    //TODO: add similar notification from ISR
 }
 
 inline void tsydmaspi_rxisr_2()
 {
     TsyDMASPI2.dmarx()->clearInterrupt();
     TsyDMASPI2.next();
+
+    //TODO: add similar notification from ISR
 }
 
 #endif // defined(__IMXRT1062__)
