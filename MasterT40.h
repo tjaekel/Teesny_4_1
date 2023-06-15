@@ -272,7 +272,7 @@ struct Master2 : public MasterBase
         }
 
         //TODO: add taskID
-        
+
         dmarx()->disable();
         dmarx()->source((volatile uint8_t &)IMXRT_LPSPI1_S.RDR);
         dmarx()->disableOnCompletion();
@@ -326,7 +326,6 @@ inline void tsydmaspi_rxisr_0()
     TsyDMASPI0.dmarx()->clearInterrupt();
     TsyDMASPI0.next();
 
-#if 1
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     //release waiting thread:
@@ -342,7 +341,6 @@ inline void tsydmaspi_rxisr_0()
     priority task.  The macro used for this purpose is dependent on the port in
     use and may be called portEND_SWITCHING_ISR(). */
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken );
-#endif
 }
 
 inline void tsydmaspi_rxisr_1()

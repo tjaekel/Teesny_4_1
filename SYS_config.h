@@ -30,6 +30,7 @@ typedef struct structCFGParams {
   unsigned long SPI2br;
   unsigned long SPI1mode;
   unsigned long SPI2mode;
+  unsigned long IPaddress;
 } tCFGParams;
 
 extern tCFGParams gCFGparams;
@@ -38,5 +39,6 @@ int CFG_Read(void);
 int CFG_Write(void);
 void CFG_Print(EResultOut out);
 void CFG_SetDefault(void);
+void CFG_Set(unsigned long idx, unsigned long val);
 
 #endif

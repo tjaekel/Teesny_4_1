@@ -42,13 +42,19 @@ constexpr uint32_t kShutdownTimeout = 30000;  // 30 seconds
 
 // Set the static IP to something other than INADDR_NONE (zero)
 // to not use DHCP. The values here are just examples.
-IPAddress staticIP{0, 0, 0, 0};
+////IPAddress staticIP{0, 0, 0, 0};
+IPAddress staticIP{192, 168, 0, 84};    //does not work!
 IPAddress subnetMask{255, 255, 255, 0};
 IPAddress gateway{192, 168, 0, 1};
 
 // --------------------------------------------------------------------------
 //  Types
 // --------------------------------------------------------------------------
+
+/* used by SYSCFG - set before we start the server */
+void TCP_Server_setIPaddress(int32_t ip) {
+  staticIP = ip;
+}
 
 // Keeps track of state for a single client.
 struct ClientState {
@@ -96,15 +102,15 @@ void TCP_Server_setup(void) {
     // Wait for Serial
   }
 #endif
-  print_log(UART_OUT, "Starting...\r\n");
+  print_log(UART_OUT, "\r\nNetwork starting...\r\n");
 
   // Unlike the Arduino API (which you can still use), QNEthernet uses
   // the Teensy's internal MAC address by default, so we can retrieve
   // it here
   uint8_t mac[6];
   Ethernet.macAddress(mac);  // This is informative; it retrieves, not sets
-  print_log(UART_OUT, "MAC = %02x:%02x:%02x:%02x:%02x:%02x\r\n",
-         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  ////print_log(UART_OUT, "MAC = %02x:%02x:%02x:%02x:%02x:%02x\r\n",
+  ////       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   // Add listeners
   // It's important to add these before doing anything with Ethernet
@@ -161,6 +167,7 @@ void TCP_Server_setup(void) {
     }
   } else {
     print_log(UART_OUT, "Starting Ethernet with static IP...\r\n");
+    
     Ethernet.begin(staticIP, subnetMask, gateway);
 
     // When setting a static IP, the address is changed immediately,
@@ -171,6 +178,8 @@ void TCP_Server_setup(void) {
         // We may still see a link later, after the timeout, so
         // continue instead of returning
       }
+      ////else
+      ////  print_log(UART_OUT, "OK, got link\r\n");
     }
   }
 
@@ -192,10 +201,10 @@ void tellServer(bool hasIP, bool linkState) {
       print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
     }
   } else {
-    // Stop the server if there's no IP address
     if (!TCPserver) {
-      // Optional
-      print_log(UART_OUT, "Address changed: Server already stopped\r\n");
+      print_log(UART_OUT, "Address changed: restart server\r\n");
+      TCPserver.begin();
+      print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
     } else {
       print_log(UART_OUT, "Stopping server...");
       fflush(stdout);  // Print what we have so far if line buffered
@@ -335,7 +344,6 @@ void processClientData(ClientState &state) {
   state.closedTime = millis();
 }
 
-// Main program loop.
 static void TCP_Server_thread(void *pvParameters) {
   while (1) {
     vTaskDelay(1);

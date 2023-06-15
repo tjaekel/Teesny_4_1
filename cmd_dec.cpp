@@ -3,6 +3,7 @@
  */
 
 #include <string.h>
+////#include <core_cm7.h>       //for "fwreset" - does not work! - files and defines for FPU missing, compile error!
 
 #include "MEM_Pool.h"
 #include "cmd_dec.h"
@@ -39,6 +40,8 @@ ECMD_DEC_Status CMD_i2cclk(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
+ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out);
+ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
@@ -129,8 +132,18 @@ const TCMD_DEC_Command Commands[] = {
 		},
 		{
 				.cmd = (const char*)"syscfg",
-				.help = (const char*)"print sys config parameters",
+				.help = (const char*)"print sys config, [-d] set default, [-w] write current",
 				.func = CMD_syscfg
+		},
+		{
+				.cmd = (const char*)"fwreset",
+				.help = (const char*)"reset MCU and restart",
+				.func = CMD_fwreset
+		},
+		{
+				.cmd = (const char*)"setcfg",
+				.help = (const char*)"set config <idx> [val]",
+				.func = CMD_setcfg
 		},
     {
 				.cmd = (const char*)"pstat",
@@ -751,6 +764,14 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
+ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out) {
+  (void)out;
+
+  CFG_Set(res->val[0], res->val[1]);
+
+  return CMD_DEC_OK;
+}
+
 ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
   int dev = 0;
 
@@ -857,4 +878,14 @@ ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out)
 	res->ctl = 1;			//break the outer command interpreter, we can have ';', done here
 
 	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
+  (void)res;
+  (void)out;
+
+  ////NVIC_SystemReset();     //CMSIS files do not work!
+  SCB_AIRCR = 0x05FA0004;
+
+  return CMD_DEC_OK;
 }
