@@ -8,6 +8,7 @@
 #include <semphr.h>
 #include <avr/pgmspace.h>
 
+#include "SYS_config.h"
 #include "VCP_UART.h"
 #include "SPI_dev.h"
 
@@ -18,7 +19,6 @@
 
 static SemaphoreHandle_t xSemaphore;
 
-uint32_t SPIClkSpeed = 10000000;
 #define ssPin   10    //SPI = 10; SPI1 = 9, pin 13 is LED and SPI SCLK!
 #define ssPin2   9
 SPISettings SPIsettings(16000000, arduino::LSBFIRST, SPI_MODE3);
@@ -34,7 +34,7 @@ void SPI_setup(void) {
 
 #ifdef SPI_DMA_MODE
   /* Remark: if we do all the time the .begin(...) again on each transaction - we do not need here to do */
-  TsyDMASPI0.begin(ssPin,  SPIsettings);
+  TsyDMASPI0.begin(ssPin, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
 #else
 	SPI1.begin();			//this kills the LED: LED, pin 13, is also SPI SCK!
 #endif
@@ -42,19 +42,19 @@ void SPI_setup(void) {
 
 int SPI_setClock(int clkspeed) {
   if (clkspeed)
-    SPIClkSpeed = (uint32_t)clkspeed;
+    gCFGparams.SPI1br = (unsigned long)clkspeed;
 
-  return (int)SPIClkSpeed;
+  return (int)gCFGparams.SPI1br;
 }
 
 #ifdef SPI_DMA_MODE
 int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
-  //place semaphore around it, so we can use in current INT handlers
+  //place semaphore around it, so we can use in concurrent INT handlers
   if( xSemaphoreTake( xSemaphore, ( TickType_t ) 1000 ) == pdTRUE ) {
     if (num) {
-      TsyDMASPI0.begin(ssPin2, SPISettings(SPIClkSpeed, arduino::LSBFIRST, SPI_MODE3));
+      TsyDMASPI0.begin(ssPin2, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
     } else {
-      TsyDMASPI0.begin(ssPin, SPISettings(SPIClkSpeed, arduino::LSBFIRST, SPI_MODE3));
+      TsyDMASPI0.begin(ssPin, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
     }
     TsyDMASPI0.transfer(tx, rx, len);
     ////TsyDMASPI0.end();

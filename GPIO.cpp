@@ -9,12 +9,21 @@
 #include "picoc.h"
 
 #include "SYS_config.h"
+#include "GPIO.h"
 
 unsigned long INTCount[2] = {0, 0};
 unsigned long INTHandledCount[2] = {0, 0};
 
 static TaskHandle_t xTaskToNotify[2] = {NULL, NULL};
 static volatile int sHandlerRunning[2] = {0, 0};
+
+tGPIOcfg GPIOpins[] = {
+  {28, "pin 28"},
+  {29, "pin 29"},
+  {30, "pin 30"},
+  {31, "pin 31"},
+  {32, "pin 32"},
+};
 
 void GPIO_Interrupt1() {
   INTCount[0]++;
@@ -124,7 +133,40 @@ void GPIO_thread2(void *pvParameters) {
   }
 }
 
+void GPIO_configPins(void) {
+  size_t i;
+  unsigned long mask = 0x1;
+
+  for (i = 0; i < (sizeof(GPIOpins) / sizeof(tGPIOcfg)); i++) {
+    if (gCFGparams.GPIOdir & mask) {
+      //configure as output
+      if (gCFGparams.GPIOod & mask) {
+        pinMode(GPIOpins[i].pin, arduino::OUTPUT_OPENDRAIN);
+      }
+      else {
+        pinMode(GPIOpins[i].pin, arduino::OUTPUT);
+      }
+      //set default output value
+      if (gCFGparams.GPIOval & mask) {
+        digitalWrite(GPIOpins[i].pin, arduino::HIGH);
+      }
+      else {
+        digitalWrite(GPIOpins[i].pin, arduino::LOW);
+      }
+    }
+    else {
+      //configure as input
+      pinMode(GPIOpins[i].pin, arduino::INPUT);
+    }
+
+    mask <<= 1;
+  }
+}
+
 void GPIO_setup(void) {
+  //configure user GPIO pins
+  GPIO_configPins();
+
   //configure GPIO pin for HW INT
   pinMode(23, arduino::INPUT_PULLUP);                //enable pull-up
   attachInterrupt(digitalPinToInterrupt(23), GPIO_Interrupt1, arduino::FALLING);
@@ -134,4 +176,39 @@ void GPIO_setup(void) {
   /* ATT: the stack size must be large enough: we call Pico-C when INT was triggered and Pico-C has SetINTHandler(char *) done */
   ::xTaskCreate(GPIO_thread1, "GPIO_thread1", THREAD_STACK_SIZE_GPIO, nullptr, THREAD_PRIO_GPIO, nullptr);
   ::xTaskCreate(GPIO_thread2, "GPIO_thread2", THREAD_STACK_SIZE_GPIO, nullptr, THREAD_PRIO_GPIO, nullptr);
+}
+
+void GPIO_putPins(unsigned long vals) {
+  size_t i;
+  unsigned long mask = 0x1;
+
+  for (i = 0; i < (sizeof(GPIOpins) / sizeof(tGPIOcfg)); i++) {
+    if (vals & mask) {
+      //set high
+      digitalWrite(GPIOpins[i].pin, arduino::HIGH);
+    }
+    else {
+      digitalWrite(GPIOpins[i].pin, arduino::LOW);
+    }
+
+    mask <<= 1;
+  }
+}
+
+unsigned long GPIOgetPins(void) {
+  size_t i;
+  unsigned long mask = 0x1;
+  unsigned long vals = 0;
+  uint8_t val;
+
+  for (i = 0; i < (sizeof(GPIOpins) / sizeof(tGPIOcfg)); i++) {
+    val = digitalRead(GPIOpins[i].pin);
+    if (val) {
+      vals |= mask;
+    }
+
+    mask <<= 1;
+  }
+
+  return vals;
 }

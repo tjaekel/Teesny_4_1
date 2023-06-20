@@ -28,9 +28,12 @@ typedef struct structCFGParams {
   unsigned long key;
   unsigned long SPI1br;
   unsigned long SPI2br;
-  unsigned long SPI1mode;
+  unsigned long SPI1mode;           //bit[3:1] = SPIMode (0..3), bit[7:4]=LSB (=0) vs. MSB (=1)
   unsigned long SPI2mode;
   unsigned long IPaddress;
+  unsigned long GPIOdir;
+  unsigned long GPIOod;             //if output: as Open Drain
+  unsigned long GPIOval;            //default values at startup
 } tCFGParams;
 
 extern tCFGParams gCFGparams;

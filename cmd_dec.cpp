@@ -49,6 +49,9 @@ ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results *res, EResultOut out);
 
+ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out);
+
 const TCMD_DEC_Command Commands[] = {
 		{
 				.cmd = (const char *)"help",
@@ -169,6 +172,16 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"udptest",
 				.help = (const char*)"test: send UDP packet",
 				.func = CMD_udptest
+		},
+    {
+				.cmd = (const char*)"ggpio",
+				.help = (const char*)"get GPIO inputs",
+				.func = CMD_ggpio
+		},
+    {
+				.cmd = (const char*)"pgpio",
+				.help = (const char*)"set GPIO output <mask>",
+				.func = CMD_pgpio
 		},
 };
 
@@ -886,6 +899,21 @@ ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
 
   ////NVIC_SystemReset();     //CMSIS files do not work!
   SCB_AIRCR = 0x05FA0004;
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
+  GPIO_putPins(res->val[0]);
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
+  unsigned long val;
+
+  val = GPIOgetPins();
+  print_log(out, "GPIOs: %08lx\r\n", val);
 
   return CMD_DEC_OK;
 }
