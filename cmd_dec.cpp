@@ -44,13 +44,16 @@ ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results *res, EResultOut out);
 
+ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out);
 
 const TCMD_DEC_Command Commands[] = {
 		{
@@ -165,13 +168,23 @@ const TCMD_DEC_Command Commands[] = {
 		},
     {
 				.cmd = (const char*)"picoc",
-				.help = (const char*)"start Pico-C interpreter",
+				.help = (const char*)"start Pico-C interpreter, [-i|-d]",
 				.func = CMD_picoc
+		},
+    {
+				.cmd = (const char*)"c:",
+				.help = (const char*)"execute Pico-C statement",
+				.func = CMD_picocExec
 		},
     {
 				.cmd = (const char*)"udptest",
 				.help = (const char*)"test: send UDP packet",
 				.func = CMD_udptest
+		},
+    {
+				.cmd = (const char*)"cgpio",
+				.help = (const char*)"configure GPIOs <dirmask> [odmask]",
+				.func = CMD_cgpio
 		},
     {
 				.cmd = (const char*)"ggpio",
@@ -182,6 +195,11 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"pgpio",
 				.help = (const char*)"set GPIO output <mask>",
 				.func = CMD_pgpio
+		},
+    {
+				.cmd = (const char*)"res",
+				.help = (const char*)"set RESET pin <0|1>",
+				.func = CMD_res
 		},
 };
 
@@ -218,6 +236,7 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 	unsigned int i;
 	int state;
 	char *xCmdStr = cmdStr;
+  char cmd_separator = CMD_DEC_SEPARATOR;
 
 	/* set default results */
 	res->cmd = NULL;
@@ -233,14 +252,21 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 
 	state = 0;
 	i = 0;
-	while ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != CMD_DEC_SEPARATOR) && (*cmdStr != CMD_DEC_COMMENT))
+
+  if (*cmdStr == '|') {
+    cmd_separator = 0xff;
+    cmdStr++;
+    xCmdStr = cmdStr;
+    res->ctl = 1;
+  }
+
+	while ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != cmd_separator) && (*cmdStr != CMD_DEC_COMMENT))
 	{
 		/* skip leading spaces, tabs */
 		while ((*cmdStr == ' ') || (*cmdStr == '\t'))
 		{
 			if ((state == 1) || (state == 3))
 			{
-				////*cmdStr = '\0';
 				state++;
 			}
 			if (state == 5)
@@ -253,11 +279,10 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 		{
 		case 0:	/* find command keyword	*/
 			res->cmd = cmdStr;
-			////res->cmdLen = 0;
 			state = 1;
 			break;
 		case 1:	/* find end of keyword */
-			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != CMD_DEC_SEPARATOR) && (*cmdStr != CMD_DEC_COMMENT))
+			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != cmd_separator) && (*cmdStr != CMD_DEC_COMMENT))
 			{
 				cmdStr++;
 				res->cmdLen++;
@@ -273,7 +298,7 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 				state = 4;
 			break;
 		case 3:	/* find end of option string */
-			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != CMD_DEC_SEPARATOR) && (*cmdStr != CMD_DEC_COMMENT))
+			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != cmd_separator) && (*cmdStr != CMD_DEC_COMMENT))
 				cmdStr++;
 			break;
 		case 4: /* now we scan just values or option value */
@@ -290,7 +315,6 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 				////fixed, and add '$' for user variable
 				if (*cmdStr == '$')
 				{
-					//res->val[i] = usrVar;
 					i++;
 				}
 				else
@@ -312,15 +336,14 @@ static unsigned int CMD_DEC_decode(char *cmdStr, TCMD_DEC_Results *res)
 			state = 5;
 			break;
 		case 5:	/* skip value characters */
-			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != CMD_DEC_SEPARATOR) && (*cmdStr != CMD_DEC_COMMENT))
+			if ((*cmdStr != '\0') && (*cmdStr != '\r') && (*cmdStr != '\n') && (*cmdStr != cmd_separator) && (*cmdStr != CMD_DEC_COMMENT))
 				cmdStr++;
 			break;
 		}
 	} /* end while */
 
-	if (*cmdStr == CMD_DEC_SEPARATOR)
+	if (*cmdStr == cmd_separator)
 	{
-		////*cmdStr++ = '\0';
 		cmdStr++;
 		res->offset = (unsigned long)(cmdStr - xCmdStr);
 		return (unsigned int)(cmdStr - xCmdStr);
@@ -405,13 +428,17 @@ static unsigned int CMD_keywordLen(const char *str)
 }
 
 /* helper function for print - string length up to ';' or '#' */
-static unsigned int CMD_lineLen(const char *str)
+static unsigned int CMD_lineLen(const char *str, int entireLine)
 {
 	unsigned int l = 0;
+  char cmdDelimiter = CMD_DEC_SEPARATOR;
+
+  if (entireLine)
+    cmdDelimiter = 0xff;
 
 	while (*str)
 	{
-		if ((*str == ';') || (*str == '#') || (*str == '\r') || (*str == '\n'))
+		if ((*str == cmdDelimiter) || (*str == '#') || (*str == '\r') || (*str == '\n'))
 			break;
 		str++;
 		l++;
@@ -575,7 +602,7 @@ ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
 ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out)
 {
 	if (res->str)
-		UART_Send((const char *)res->str, CMD_lineLen(res->str), out);
+		UART_Send((const char *)res->str, CMD_lineLen(res->str, res->ctl), out);
 	if (res->opt)
 	{
 		if (strncmp(res->opt, "-n", 2) == 0)
@@ -812,9 +839,32 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
 
 ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 {
+  if (res->opt) {
+    if (strncmp(res->opt, "-i", 2) == 0) {
+      pico_c_init();
+      return CMD_DEC_OK;
+    }
+    if (strncmp(res->opt, "-d", 2) == 0) {
+      if (pico_c_isRunning()) {
+        pico_c_deinit();
+      }
+      return CMD_DEC_OK;
+    }
+  }
+
 	pico_c_main_interactive(0, NULL);
 
 	return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
+  if (pico_c_isRunning()) {
+    int strLen = (int)strlen(res->str);
+    res->ctl = 1;             //break entire command line, take as one line
+    Parse("PICOC", res->str, strLen, TRUE);
+  }
+
+  return CMD_DEC_OK;
 }
 
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results *res, EResultOut out)
@@ -903,7 +953,17 @@ ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
+ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out) {
+  (void)out;
+
+  GPIO_config(res->val[0], res->val[1]);
+
+  return CMD_DEC_OK;
+}
+
 ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
+  (void)out;
+
   GPIO_putPins(res->val[0]);
 
   return CMD_DEC_OK;
@@ -917,3 +977,12 @@ ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
 
   return CMD_DEC_OK;
 }
+
+ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out) {
+  (void)out;
+
+  GPIO_resetPin(res->val[0]);
+
+  return CMD_DEC_OK;
+}
+

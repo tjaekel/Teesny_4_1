@@ -13,5 +13,7 @@ void GPIO_setup(void);
 
 void GPIO_putPins(unsigned long vals);
 unsigned long GPIOgetPins(void);
+void GPIO_config(unsigned long dir, unsigned long od);
+void GPIO_resetPin(unsigned long val);
 
 #endif

@@ -24,7 +24,7 @@ void Initialise(void)
     TypeInit();
     LibraryInit(&GlobalTable, (const char*)"c library", &CLibrary);
 #ifdef USE_PLATFORM_LIB
-    CLibraryInit();				/* optional: defines TRUE, FALSE, NULL */
+    CLibraryInit();				      /* optional: defines TRUE, FALSE, NULL */
     PlatformLibraryInit();      /* empty */
     LibraryInit(&GlobalTable, "platform library", &PlatformLibrary);
 #endif
@@ -55,21 +55,19 @@ int pico_c_main_interactive(int argc, char **argv)
     (void)argv;
 
 RESTART:
-	GPicocRestart = 0;
+	  GPicocRestart = 0;
     picoc_ClearStopped();
 
     if ( ! setjmp(RestartBuf))
     {
-    	picoc_IsRunning = 1;
-        platform_init();
-        Initialise();
-	
-//#ifndef SAVE_SPACE
+    	  if ( ! picoc_IsRunning) {
+          platform_init();
+          Initialise();
+          picoc_IsRunning = 1;
+        }
+
         PlatformPrintf("***** PICO-C command interpreter *****\n");
         PlatformPrintf("      (version: %s, %s)\n", VERSION_STR, __DATE__);
-//#else
-//    PlatformPrintf("\nPICO-C\n");
-//#endif
 
         ParseInteractive();
     }
@@ -83,9 +81,50 @@ RESTART:
     }
 
     //actually we never return to here - except with PlatformExit
-    Cleanup();
-    picoc_IsRunning = 0;
+    if (pico_c_getExitValue() != -15) {
+      //leave the Pico-C working, do not clean anything, reenter later with all definitions done
+      picoc_IsRunning = 0;
+      Cleanup();
+    }
+    else {
+      picoc_IsRunning = 2;
+    }
+
     return 0;
+}
+
+int pico_c_init(void) {
+  GPicocRestart = 0;
+  picoc_ClearStopped();
+
+  if ( ! setjmp(RestartBuf))
+  {
+    picoc_IsRunning = 1;
+    platform_init();
+    Initialise();
+  }
+  else
+  {
+
+  }
+
+  return 0;
+}
+
+int pico_c_deinit(void) {
+  picoc_IsRunning = 0;
+  Cleanup();
+  
+  return 0;
+}
+
+int pico_c_getExitValue(void) {
+  extern int ExitValue;
+  return ExitValue;
+}
+
+int pico_c_isRunning(void) {
+  return picoc_IsRunning;
 }
 
 /* INT handling */

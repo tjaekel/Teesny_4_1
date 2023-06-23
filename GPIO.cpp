@@ -163,9 +163,21 @@ void GPIO_configPins(void) {
   }
 }
 
+void GPIO_config(unsigned long dir, unsigned long od) {
+  gCFGparams.GPIOdir = dir;
+  gCFGparams.GPIOod = od;
+
+  GPIO_configPins();
+}
+
 void GPIO_setup(void) {
   //configure user GPIO pins
   GPIO_configPins();
+
+  //configure RES output signal
+  pinMode(2, arduino::OUTPUT);
+  //drive high as default
+  digitalWrite(2, arduino::HIGH);
 
   //configure GPIO pin for HW INT
   pinMode(23, arduino::INPUT_PULLUP);                //enable pull-up
@@ -211,4 +223,11 @@ unsigned long GPIOgetPins(void) {
   }
 
   return vals;
+}
+
+void GPIO_resetPin(unsigned long val) {
+  if (val)
+    digitalWrite(2, arduino::HIGH);
+  else
+    digitalWrite(2, arduino::LOW);
 }

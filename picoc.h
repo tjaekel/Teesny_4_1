@@ -447,6 +447,9 @@ void Cleanup(void);
 int picoc_INThandler(void);
 int picoc_INThandler2(void);
 
+int pico_c_isRunning(void);
+int pico_c_getExitValue(void);
+
 void put_string(char *s);
 
 /* for Qt integration */
@@ -455,6 +458,8 @@ void    put_character(unsigned char c);
 char *  picoc_GetCommandLine(char *s, int MaxLen);
 
 int     pico_c_main_interactive(int argc, char **argv);
+int     pico_c_init(void);
+int     pico_c_deinit(void);
 void    picoc_ModifyInput(char *dst, char *src);
 
 extern int GpicocAbort;

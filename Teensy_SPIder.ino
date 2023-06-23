@@ -52,7 +52,6 @@ void setup(void) {
 
     CMD_setup();              //launch CMD interpreter as a thread
 
-    ::Serial.println("setup(): starting scheduler...");
     ::Serial.flush();
 
     ::vTaskStartScheduler();

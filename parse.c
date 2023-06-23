@@ -974,10 +974,13 @@ void handler(int s){
 /* parse interactively */
 void ParseInteractive(void)
 {
-    struct ParseState Parser;
+    /* static */ struct ParseState Parser;
     enum ParseResult Ok;
 
-    LexInitParser(&Parser, NULL, NULL, StrEmpty, TRUE);
+    ////if (pico_c_isRunning() != 2)
+    {
+      LexInitParser(&Parser, NULL, NULL, StrEmpty, TRUE);
+    }
     gTopParser = &Parser;
 
     do

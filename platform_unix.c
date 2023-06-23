@@ -42,9 +42,6 @@ char *PlatformGetLine(char *Buf, int MaxLen)
      */
 
 	do {
-#if 0
-			osThreadYield();
-#endif
 			l = UART_getString((unsigned char *)Buf, MaxLen);
 	} while (!l);
 
