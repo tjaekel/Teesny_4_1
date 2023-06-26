@@ -105,7 +105,8 @@ void TFTP_setup(EResultOut out) {
   {
     uint32_t rawAddr;
     rawAddr = Ethernet.localIP();
-    print_log(out, "*I: IP address: %ld.%ld.%ld.%ld\r\n", (rawAddr >> 0) & 0xFF, (rawAddr >> 8) & 0xFF, (rawAddr >> 16) & 0xFF, (rawAddr >> 24) & 0xFF);
+    if (gCFGparams.DebugFlags & DBG_NETWORK)
+      print_log(out, "\r\n*I: IP address: %ld.%ld.%ld.%ld\r\n", (rawAddr >> 0) & 0xFF, (rawAddr >> 8) & 0xFF, (rawAddr >> 16) & 0xFF, (rawAddr >> 24) & 0xFF);
   }
   
   ::xTaskCreate(tftp_thread, "tftp_thread", THREAD_STACK_SIZE_TFTP, nullptr, THREAD_PRIO_TFTP, nullptr);

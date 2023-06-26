@@ -7,9 +7,8 @@
 
 #include "MEM_Pool.h"
 #include "cmd_dec.h"
-#include "debug_sys.h"
+#include "define_sys.h"
 #include "CMD_thread.h"
-
 #include "SPI_dev.h"
 #include "SD_Card.h"
 #include "SYS_config.h"
@@ -17,10 +16,13 @@
 #include "GPIO.h"
 #include "UDP_send.h"
 #include "TCP_Server.h"
+#include "SYS_error.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_debug(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out);
 
@@ -65,6 +67,16 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char *)"sysinfo",
 				.help = (const char *)"display version and systrem info",
 				.func = CMD_sysinfo
+		},
+    {
+				.cmd = (const char *)"syserr",
+				.help = (const char *)"display sys error [-d]",
+				.func = CMD_syserr
+		},
+    {
+				.cmd = (const char *)"debug",
+				.help = (const char *)"set debug flags <val>",
+				.func = CMD_debug
 		},
 		{
 				.cmd = (const char *)"print",
@@ -595,6 +607,30 @@ ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
   MEM_PoolCounters(&inUse, &watermark, &max);
   print_log(out, "MEMPool      : %d | %d | %d\r\n", inUse, watermark, max);
   print_log(out, "HTTP clients : %d\r\n", HTTPD_GetClientNumber());
+  print_log(out, "ETH link     : %d\r\n", HTTPD_GetETHLinkState());
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out)
+{
+  unsigned long err;
+
+  if (res->opt) {
+    if (strncmp(res->opt, "-d", 2) == 0)
+      SYSERR_Get(out, 1);
+  }
+  else {
+    err = SYSERR_Get(out, 0);
+    print_log(out, "*I: SYS error: %lx\r\n", err);
+  }
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_debug(TCMD_DEC_Results *res, EResultOut out) {
+  (void)out;
+  gCFGparams.DebugFlags = res->val[0];
 
   return CMD_DEC_OK;
 }

@@ -34,9 +34,14 @@ typedef struct structCFGParams {
   unsigned long GPIOdir;
   unsigned long GPIOod;             //if output: as Open Drain
   unsigned long GPIOval;            //default values at startup
+  unsigned long DebugFlags;
 } tCFGParams;
 
 extern tCFGParams gCFGparams;
+
+#define DBG_VERBOSE               (1 <<  0)
+#define DBG_SPI                   (1 <<  1)
+#define DBG_NETWORK               (1 << 31)
 
 int CFG_Read(void);
 int CFG_Write(void);

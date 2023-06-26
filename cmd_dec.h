@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "debug_sys.h"
+#include "define_sys.h"
 #include "VCP_UART.h"
 
 #define CMD_DEC_NUM_VAL		(480 +1)		/* maximum number of value parameters */

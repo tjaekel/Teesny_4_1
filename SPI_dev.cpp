@@ -60,6 +60,8 @@ int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
     ////TsyDMASPI0.end();
 
     xSemaphoreGive( xSemaphore );
+
+    //TODO: SPI debug
   }
   else {
     print_log(UART_OUT, "*E: SPI semaphore timeout\r\n");

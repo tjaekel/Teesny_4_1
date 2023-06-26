@@ -16,7 +16,7 @@ typedef enum {
 	UART_OUT,
 	HTTPD_OUT,
 	HTTPD_OUT_ONLY,
-	SILENT
+	SILENT,
 } EResultOut;
 
 extern char XPrintBuf[XPRINT_LEN];

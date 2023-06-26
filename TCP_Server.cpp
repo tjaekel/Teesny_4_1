@@ -10,12 +10,12 @@
 #include "avr/pgmspace.h"
 #include <climits>
 
+#include "define_sys.h"
 #include "cmd_dec.h"
 #include "VCP_UART.h"
-
 #include "HTTP_data.cpp"
-
 #include "SYS_config.h"
+#include "SYS_error.h"
 
 using namespace qindesign::network;
 
@@ -25,7 +25,7 @@ using namespace qindesign::network;
 
 // The DHCP timeout, in milliseconds. Set to zero to not wait and
 // instead rely on the listener to inform us of an address assignment.
-constexpr uint32_t kDHCPTimeout = 15000;  // 15 seconds
+constexpr uint32_t kDHCPTimeout = 5000;  // 5 seconds
 
 // The link timeout, in milliseconds. Set to zero to not wait and
 // instead rely on the listener to inform us of a link.
@@ -43,9 +43,11 @@ constexpr uint32_t kShutdownTimeout = 30000;  // 30 seconds
 // Set the static IP to something other than INADDR_NONE (zero)
 // to not use DHCP. The values here are just examples.
 ////IPAddress staticIP{0, 0, 0, 0};
-IPAddress staticIP{192, 168, 0, 84};    //does not work!
+IPAddress staticIP{192, 168, 0, 84};        //will be overwritten by syscfg!
 IPAddress subnetMask{255, 255, 255, 0};
 IPAddress gateway{192, 168, 0, 1};
+
+static int ETHLinkStatus = 0;
 
 // --------------------------------------------------------------------------
 //  Types
@@ -102,7 +104,8 @@ void TCP_Server_setup(void) {
     // Wait for Serial
   }
 #endif
-  print_log(UART_OUT, "\r\nNetwork starting...\r\n");
+  if (gCFGparams.DebugFlags & DBG_NETWORK)
+    print_log(UART_OUT, "\r\nNetwork starting...\r\n");
 
   // Unlike the Arduino API (which you can still use), QNEthernet uses
   // the Teensy's internal MAC address by default, so we can retrieve
@@ -118,7 +121,12 @@ void TCP_Server_setup(void) {
 
   // Listen for link changes
   Ethernet.onLinkState([](bool state) {
-    print_log(UART_OUT, "[Ethernet] Link %s\r\n", state ? "ON" : "OFF");
+    if (gCFGparams.DebugFlags & DBG_NETWORK)
+      print_log(UART_OUT, "[Ethernet] Link %s\r\n", state ? "ON" : "OFF");
+      ETHLinkStatus = (int)state;
+
+      if ( ! state)
+        SYSERR_Set(UART_OUT, SYSERR_ETH);
   });
 
   // Listen for address changes
@@ -126,19 +134,23 @@ void TCP_Server_setup(void) {
     IPAddress ip = Ethernet.localIP();
     bool hasIP = (ip != INADDR_NONE);
     if (hasIP) {
-      print_log(UART_OUT, "[Ethernet] Address changed:\r\n");
-
-      print_log(UART_OUT, "    Local IP = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-      ip = Ethernet.subnetMask();
-      print_log(UART_OUT, "    Subnet   = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-      ip = Ethernet.gatewayIP();
-      print_log(UART_OUT, "    Gateway  = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
-      ip = Ethernet.dnsServerIP();
-      if (ip != INADDR_NONE) {  // May happen with static IP
-        print_log(UART_OUT, "    DNS      = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      if (gCFGparams.DebugFlags & DBG_NETWORK) {
+        print_log(UART_OUT, "[Ethernet] Address changed:\r\n");
+        print_log(UART_OUT, "    Local IP = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        ip = Ethernet.subnetMask();
+        print_log(UART_OUT, "    Subnet   = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        ip = Ethernet.gatewayIP();
+        print_log(UART_OUT, "    Gateway  = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        ip = Ethernet.dnsServerIP();
+        if (ip != INADDR_NONE) {  // May happen with static IP
+          print_log(UART_OUT, "    DNS      = %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+        }
       }
     } else {
-      print_log(UART_OUT, "[Ethernet] Address changed: No IP address\r\n");
+      if (gCFGparams.DebugFlags & DBG_NETWORK) {
+        print_log(UART_OUT, "[Ethernet] Address changed: No IP address\r\n");
+        SYSERR_Set(UART_OUT, SYSERR_ETH);
+      }
     }
 
     // Tell interested parties the state of the IP address and link,
@@ -150,9 +162,13 @@ void TCP_Server_setup(void) {
   });
 
   if (staticIP == INADDR_NONE) {
-    print_log(UART_OUT, "Starting Ethernet with DHCP...\r\n");
+    if (gCFGparams.DebugFlags & DBG_NETWORK)
+      print_log(UART_OUT, "Starting Ethernet with DHCP...\r\n");
     if (!Ethernet.begin()) {
-      print_log(UART_OUT, "Failed to start Ethernet\r\n");
+      if (gCFGparams.DebugFlags & DBG_NETWORK) {
+        print_log(UART_OUT, "Failed to start Ethernet\r\n");
+        SYSERR_Set(UART_OUT, SYSERR_ETH);
+      }
       return;
     }
 
@@ -160,13 +176,17 @@ void TCP_Server_setup(void) {
     // when an address has been assigned
     if (kDHCPTimeout > 0) {
       if (!Ethernet.waitForLocalIP(kDHCPTimeout)) {
-        print_log(UART_OUT, "Failed to get IP address from DHCP\r\n");
-        // We may still get an address later, after the timeout,
-        // so continue instead of returning
+        if (gCFGparams.DebugFlags & DBG_NETWORK) {
+          print_log(UART_OUT, "Failed to get IP address from DHCP\r\n");
+          // We may still get an address later, after the timeout,
+          // so continue instead of returning
+        }
+        SYSERR_Set(UART_OUT, SYSERR_ETH);
       }
     }
   } else {
-    print_log(UART_OUT, "Starting Ethernet with static IP...\r\n");
+    if (gCFGparams.DebugFlags & DBG_NETWORK)
+      print_log(UART_OUT, "Starting Ethernet with static IP...\r\n");
     
     Ethernet.begin(staticIP, subnetMask, gateway);
 
@@ -174,7 +194,10 @@ void TCP_Server_setup(void) {
     // but the link may not be up; optionally wait for the link here
     if (kLinkTimeout > 0) {
       if (!Ethernet.waitForLink(kLinkTimeout)) {
-        print_log(UART_OUT, "Failed to get link\r\n");
+        if (gCFGparams.DebugFlags & DBG_NETWORK) {
+          print_log(UART_OUT, "Failed to get link\r\n");
+        }
+        SYSERR_Set(UART_OUT, SYSERR_ETH);
         // We may still see a link later, after the timeout, so
         // continue instead of returning
       }
@@ -193,29 +216,35 @@ void tellServer(bool hasIP, bool linkState) {
   if (hasIP && linkState) {
     if (TCPserver) {
       // Optional
-      print_log(UART_OUT, "Address changed: Server already started\r\n");
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Address changed: Server already started\r\n");
     } else {
-      print_log(UART_OUT, "Starting server on port %u...", kServerPort);
-      fflush(stdout);  // Print what we have so far if line buffered
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Starting server on port %u...", kServerPort);
       TCPserver.begin();
-      print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
     }
   } else {
     if (!TCPserver) {
-      print_log(UART_OUT, "Address changed: restart server\r\n");
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Address changed: restart server\r\n");
       TCPserver.begin();
-      print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "%s\r\n", TCPserver ? "done." : "FAILED!");
     } else {
-      print_log(UART_OUT, "Stopping server...");
-      fflush(stdout);  // Print what we have so far if line buffered
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Stopping server...");
+      SYSERR_Set(UART_OUT, SYSERR_ETH);
       TCPserver.end();
-      print_log(UART_OUT, "done\r\n");
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "done\r\n");
     }
   }
 }
 
 //HTTP request buffer
-static uint8_t rxBuf[2048];
+static uint8_t rxBuf[HTTPD_BUF_REQ_SIZE];
 
 void processClientBinary(ClientState &state, uint8_t *buf, int avail) {
   int len;
@@ -351,9 +380,11 @@ static void TCP_Server_thread(void *pvParameters) {
     if (client) {
       // We got a connection!
       IPAddress ip = client.remoteIP();
-      print_log(UART_OUT, "Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Client connected: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
       clients.emplace_back(std::move(client));
-      print_log(UART_OUT, "Client count: %zu\r\n", clients.size());
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "Client count: %zu\r\n", clients.size());
     }
 
     // Process data from each client
@@ -397,7 +428,8 @@ static void TCP_Server_thread(void *pvParameters) {
                                [](const auto &state) { return state.closed; }),
                 clients.end());
     if (clients.size() != size) {
-      print_log(UART_OUT, "New client count: %zu\r\n", clients.size());
+      if (gCFGparams.DebugFlags & DBG_NETWORK)
+        print_log(UART_OUT, "New client count: %zu\r\n", clients.size());
     }
   } /* end while */
 }
@@ -408,4 +440,8 @@ uint32_t HTTPD_GetIPAddress(void) {
 
 unsigned int HTTPD_GetClientNumber(void) {
   return clients.size();
+}
+
+int HTTPD_GetETHLinkState(void) {
+  return ETHLinkStatus;
 }
