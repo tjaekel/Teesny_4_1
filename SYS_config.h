@@ -4,8 +4,8 @@
 ////using namespace std;
 
 /* define system macros, stack size etc. */
-#define VERSION_NUMBER  "V1.1.1"
-#define VERSION_STRING  "---- Teensy FW: " VERSION_NUMBER " ----"
+#define VERSION_NUMBER  "V1.2"
+#define VERSION_STRING  "\r\n---- Teensy FW: " VERSION_NUMBER " ----"
 
 /* thread definitions */
 #define THREAD_STACK_SIZE_CMD         (2*1024)
@@ -30,6 +30,8 @@ typedef struct structCFGParams {
   unsigned long SPI2br;
   unsigned long SPI1mode;           //bit[3:1] = SPIMode (0..3), bit[7:4]=LSB (=0) vs. MSB (=1)
   unsigned long SPI2mode;
+  unsigned long SPI1words;          //bit[3:0] = bytes per words (1, 2, 4), bit[4] = 1 Big Endian
+  unsigned long SPI2words;          //bit[3:0] = bytes per words (1, 2, 4), bit[4] = 1 Big Endian
   unsigned long IPaddress;
   unsigned long GPIOdir;
   unsigned long GPIOod;             //if output: as Open Drain

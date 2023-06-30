@@ -13,10 +13,4 @@
 #define DONT_CLOSE_CONNECTION                         //close connection in BINARY mode or not
 #define HTTPD_BUF_REQ_SIZE      (4*1024)              //size of string for HTTPD request
 
-//#define WITH_ITCM									//use ITCM memory and initialize code
-//#define CLOCK_CFG									//configure 480 MHz
-//#define WITH_SDCARD								//with SDCar init and commands
-//#define WITH_SDRAM                //with SDRAM init
-//#define WITH_I2C									//with I2C functions
-
 #endif

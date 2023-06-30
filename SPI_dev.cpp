@@ -9,40 +9,50 @@
 #include <avr/pgmspace.h>
 
 #include "SYS_config.h"
+#include "SYS_error.h"
 #include "VCP_UART.h"
 #include "SPI_dev.h"
+#include "GPIO.h"
 
 #ifdef SPI_DMA_MODE
 /* ATT: include just once, only here, not again through SPI_dev.h! */
 #include "TsyDMASPI.h"
+#else
+#include <SPI.h>
 #endif
 
 static SemaphoreHandle_t xSemaphore;
 
 #define ssPin   10    //SPI = 10; SPI1 = 9, pin 13 is LED and SPI SCLK!
 #define ssPin2   9
-SPISettings SPIsettings(16000000, arduino::LSBFIRST, SPI_MODE3);
+SPISettings SPIsettings(16000000, arduino::LSBFIRST, SPI_MODE0);
 
 void SPI_setup(void) {
+  
+  GPIO_setOutValue(ssPin, arduino::HIGH);
 	pinMode(ssPin, arduino::OUTPUT);
-	digitalWrite(ssPin, arduino::HIGH);
+  ////digitalWrite(ssPin, arduino::HIGH);
+	
+  GPIO_setOutValue(ssPin2, arduino::HIGH);
   pinMode(ssPin2, arduino::OUTPUT);
-	digitalWrite(ssPin2, arduino::HIGH);
-
+  ////digitalWrite(ssPin2, arduino::HIGH);
+	
   xSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive( xSemaphore );
 
 #ifdef SPI_DMA_MODE
   /* Remark: if we do all the time the .begin(...) again on each transaction - we do not need here to do */
-  TsyDMASPI0.begin(ssPin, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
+  ////TsyDMASPI0.begin(ssPin, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
 #else
-	SPI1.begin();			//this kills the LED: LED, pin 13, is also SPI SCK!
+	SPI.begin();			//this kills the LED: LED, pin 13, is also SPI SCK!
 #endif
 }
 
 int SPI_setClock(int clkspeed) {
-  if (clkspeed)
+  if (clkspeed) {
     gCFGparams.SPI1br = (unsigned long)clkspeed;
+    gCFGparams.SPI2br = (unsigned long)clkspeed;
+  }
 
   return (int)gCFGparams.SPI1br;
 }
@@ -65,6 +75,7 @@ int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
   }
   else {
     print_log(UART_OUT, "*E: SPI semaphore timeout\r\n");
+    SYSERR_Set(UART_OUT, SYSERR_SPI);
   }
 
 	return 0;		//no error
@@ -72,25 +83,36 @@ int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
 #else
 #if 0
 int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
-	SPI1.beginTransaction(SPIsettings);
+	SPI.beginTransaction(SPIsettings);
 	digitalWrite(ssPin, LOW);
 	while (len--) {
-		*rx++ = SPI1.transfer(*tx++);
+		*rx++ = SPI.transfer(*tx++);
 	}
 	digitalWrite(ssPin, HIGH);
-	SPI1.endTransaction();
+	SPI.endTransaction();
 
 	return 0;		//no error
 }
 #else
 int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
-	SPI1.beginTransaction(SPIsettings);
-	digitalWrite(ssPin, LOW);
+  if (num) {
+	  SPI.beginTransaction(SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
+	  digitalWrite(ssPin2, arduino::LOW);
 
-	SPI1.transfer(tx, rx, (uint32_t)len);
+	  SPI.transfer(tx, rx, (uint32_t)len);
 
-	digitalWrite(ssPin, HIGH);
-	SPI1.endTransaction();
+	  digitalWrite(ssPin2, arduino::HIGH);
+	  SPI.endTransaction();
+  }
+  else {
+    SPI.beginTransaction(SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
+	  digitalWrite(ssPin, arduino::LOW);
+
+	  SPI.transfer(tx, rx, (uint32_t)len);
+
+	  digitalWrite(ssPin, arduino::HIGH);
+	  SPI.endTransaction();
+  }
 
 	return 0;		//no error
 }

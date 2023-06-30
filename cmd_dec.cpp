@@ -26,10 +26,10 @@ ECMD_DEC_Status CMD_debug(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out);
 
+#ifdef WITH_SDCARD
 ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results* res, EResultOut out);
-#ifdef WITH_SDCARD
 ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_sdformat(TCMD_DEC_Results* res, EResultOut out);
 #endif
@@ -40,6 +40,7 @@ ECMD_DEC_Status CMD_i2cclk(TCMD_DEC_Results* res, EResultOut out);
 #endif
 
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out);
+ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out);
 ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out);
@@ -51,6 +52,7 @@ ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_cstat(TCMD_DEC_Results *res, EResultOut out);
 
 ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out);
@@ -60,7 +62,7 @@ ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out);
 const TCMD_DEC_Command Commands[] = {
 		{
 				.cmd = (const char *)"help",
-				.help = (const char *)"[cmd] list of all defined commands or help for cmd",
+				.help = (const char *)"list of all defined commands or help for [cmd]",
 				.func = CMD_help
 		},
     {
@@ -93,6 +95,7 @@ const TCMD_DEC_Command Commands[] = {
 				.help = (const char *)"delay [ms]",
 				.func = CMD_delay
 		},
+#ifdef WITH_SDCARD
     {
 				.cmd = (const char*)"sdinit",
 				.help = (const char*)"initialize <1> or deinit SDCard",
@@ -105,13 +108,12 @@ const TCMD_DEC_Command Commands[] = {
 		},
 		{
 				.cmd = (const char*)"sdprint",
-				.help = (const char*)"sdprint <fname> as text file",
+				.help = (const char*)"print <fname> as text file",
 				.func = CMD_sdprint
 		},
-#ifdef WITH_SDCARD
 		{
 				.cmd = (const char*)"sdexec",
-				.help = (const char*)"sdexec <fname> execute as script file",
+				.help = (const char*)"execute <fname> as script file",
 				.func = CMD_sdexec
 		},
 		{
@@ -148,6 +150,11 @@ const TCMD_DEC_Command Commands[] = {
 				.help = (const char*)"send bytes via SPI [-P|-A] <byte ...>",
 				.func = CMD_rawspi
 		},
+    {
+				.cmd = (const char*)"spitr",
+				.help = (const char*)"send words via SPI [-P|-A] <word ...>",
+				.func = CMD_spitr
+		},
 		{
 				.cmd = (const char*)"syscfg",
 				.help = (const char*)"print sys config, [-d] set default, [-w] write current",
@@ -169,6 +176,11 @@ const TCMD_DEC_Command Commands[] = {
 				.func = CMD_pstat
 		},
     {
+				.cmd = (const char*)"cstat",
+				.help = (const char*)"clear system counters [-P|-A]",
+				.func = CMD_cstat
+		},
+    {
 				.cmd = (const char*)"ipaddr",
 				.help = (const char*)"display the MCU IP address",
 				.func = CMD_ipaddr
@@ -180,12 +192,12 @@ const TCMD_DEC_Command Commands[] = {
 		},
     {
 				.cmd = (const char*)"picoc",
-				.help = (const char*)"start Pico-C interpreter, [-i|-d]",
+				.help = (const char*)"init/delete Pico-C interpreter, [-i|-d]",
 				.func = CMD_picoc
 		},
     {
 				.cmd = (const char*)"c:",
-				.help = (const char*)"execute Pico-C statement",
+				.help = (const char*)"execute Pico-C statement from shell",
 				.func = CMD_picocExec
 		},
     {
@@ -410,7 +422,8 @@ ECMD_DEC_Status CMD_DEC_execute(char *cmd, EResultOut out)
 					UART_Send((const char *)cmdRes->cmd, cmdRes->cmdLen, out);
 					UART_Send((const char *)"<", 1, out);
 					UART_Send((const char *)"\r\n", 2, out);
-					//SYS_SetError(SYS_ERR_INVALID_CMD);
+					
+          SYSERR_Set(out, SYSERR_CMD);
 				}
 			}
 
@@ -754,10 +767,12 @@ void UART_SendStr(const char* str, EResultOut out) {
 }
 
 ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
-
   unsigned char *SPIbufTx, *SPIbufRx;
   unsigned long i;
   int dev = 0;
+
+  if (res->num == 0)
+		return CMD_DEC_INVALID;	//we need at least one byte
 
   if (res->opt) {
     if (strncmp(res->opt, "-A", 2) == 0)
@@ -787,6 +802,132 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
     unsigned long i;
     for (i = 0; i < res->num; i++) {
       print_log(out, "%02x ", *(SPIbufRx + i));
+    }
+    UART_Send((const char *)"\r\n", 2, out);
+  }
+
+  MEM_PoolFree(SPIbufTx);
+  MEM_PoolFree(SPIbufRx);
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
+  unsigned char *SPIbufTx, *SPIbufRx;
+  unsigned long i;
+  int dev = 0;
+
+  if (res->num == 0)
+		return CMD_DEC_INVALID;	//we need at least one byte
+
+  if (res->opt) {
+    if (strncmp(res->opt, "-A", 2) == 0)
+      dev = 1;
+  }
+
+  /* we allocate maximum for 32bit words, even used shorter later */
+  SPIbufTx = (unsigned char *)MEM_PoolAlloc(4 * CMD_DEC_NUM_VAL);
+  if (SPIbufTx) {
+    SPIbufRx = (unsigned char *)MEM_PoolAlloc(4 *CMD_DEC_NUM_VAL);
+    if ( ! SPIbufRx) {
+      MEM_PoolFree(SPIbufTx);
+      return CMD_DEC_OOMEM;
+    }
+  }
+  else {
+    return CMD_DEC_OOMEM;
+  }
+
+  /* check word size, endian and generate SPI packet */
+  {
+    int wordSize;
+    int endian;
+
+    if (dev == 1)
+	  {
+		  wordSize = gCFGparams.SPI1words & 0xF;
+		  endian = (gCFGparams.SPI1words >> 4) & 0x1;
+	  }
+	  else
+	  {
+		  wordSize = gCFGparams.SPI2words & 0xF;
+		  endian = (gCFGparams.SPI2words >> 4) & 0x1;
+	  }
+
+	  for (i = 0; i < (res->num * wordSize); i += wordSize)
+	  {
+		  //set spiTx buffer - here it depends on WordSize and Endian from SYS config
+		  switch (wordSize)
+		  {
+		  case 1: //CFG_SPI_WS_8
+				SPIbufTx[i] = (uint8_t)res->val[i];
+				break;
+		  case 2: //CFG_SPI_WS_16
+				if (endian == 1)
+				{
+					SPIbufTx[i + 0] = (uint8_t)(res->val[i / wordSize] >> 8);
+					SPIbufTx[i + 1] = (uint8_t)(res->val[i / wordSize] >> 0);
+				}
+				else
+				{
+					SPIbufTx[i + 0] = (uint8_t)(res->val[i / wordSize] >> 0);
+					SPIbufTx[i + 1] = (uint8_t)(res->val[i / wordSize] >> 8);
+				}
+				break;
+		  default: //CFG_SPI_WS_32
+				if (endian == 1)
+				{
+					SPIbufTx[i + 0] = (uint8_t)(res->val[i / wordSize] >> 24);
+					SPIbufTx[i + 1] = (uint8_t)(res->val[i / wordSize] >> 16);
+					SPIbufTx[i + 2] = (uint8_t)(res->val[i / wordSize] >>  8);
+					SPIbufTx[i + 3] = (uint8_t)(res->val[i / wordSize] >>  0);
+				}
+				else
+				{
+					SPIbufTx[i + 0] = (uint8_t)(res->val[i / wordSize] >>  0);
+					SPIbufTx[i + 1] = (uint8_t)(res->val[i / wordSize] >>  8);
+					SPIbufTx[i + 2] = (uint8_t)(res->val[i / wordSize] >> 16);
+					SPIbufTx[i + 3] = (uint8_t)(res->val[i / wordSize] >> 24);
+				}
+				break;
+		  }
+	  }
+
+    /* do SPI transaction */
+    SPI_transaction(dev, SPIbufTx, SPIbufRx, res->num * wordSize);
+
+    /* decode results */
+    {
+      for (i = 0; i < (res->num * wordSize); i += wordSize)
+	    {
+		    switch (wordSize)
+		    {
+		      case 1: //CFG_SPI_WS_8 :
+				    print_log(out, (const char *)"0x%02x ", SPIbufRx[i]);
+				    break;
+		      case 2: //CFG_SPI_WS_16 :
+				    if (endian == 1)
+				    {
+					    print_log(out, (const char *)"0x%02x%02x ", SPIbufRx[i + 0], SPIbufRx[i + 1]);
+				    }
+				    else
+				    {
+					    print_log(out, (const char *)"0x%02x%02x ", SPIbufRx[i + 1], SPIbufRx[i + 0]);
+				    }
+				    break;
+		      default: //CFG_SPI_WS_32
+				    if (endian == 1)
+				    {
+					    print_log(out, (const char *)"0x%02x%02x%02x%02x ", SPIbufRx[i + 0], SPIbufRx[i + 1], SPIbufRx[i + 2], SPIbufRx[i + 3]);
+				    }
+				    else
+				    {
+					    print_log(out, (const char *)"0x%02x%02x%02x%02x ", SPIbufRx[i + 3], SPIbufRx[i + 2], SPIbufRx[i + 1], SPIbufRx[i + 0]);
+				    }
+				    break;
+		    }
+	    }
+	    UART_Send((const char *)"\r\n", 2, out);
     }
   }
 
@@ -858,6 +999,19 @@ ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
 
   print_log(out, "INT cnt        : %ld\r\n", GPIO_GetINTcounter(dev));
   print_log(out, "INT handled cnt: %ld\r\n", GPIO_GetINTHandledcounter(dev));
+
+  return CMD_DEC_OK;
+}
+
+ECMD_DEC_Status CMD_cstat(TCMD_DEC_Results* res, EResultOut out) {
+  int dev = 0;
+
+  if (res->opt) {
+    if (strncmp(res->opt, "-A", 2) == 0)
+      dev = 1;
+  }
+
+  GPIO_ClearCounters(dev);
 
   return CMD_DEC_OK;
 }

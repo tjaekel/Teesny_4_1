@@ -19,8 +19,15 @@ static void SYSERR_printDecoded(EResultOut out, unsigned long err) {
       s = "SPI error";
     if ((err & sMask) == SYSERR_ETH)
       s = "ETH link";
+    if ((err & sMask) == SYSERR_MEM)
+      s = "MEM error";
+    if ((err & sMask) == SYSERR_TFTP)
+      s = "TFTP error";
+    if ((err & sMask) == SYSERR_UDP)
+      s = "UDP error";
     if ((err & sMask) == SYSERR_FATAL)
-      s = "TATAL error";
+      s = "FATAL error";
+
     if (s)
       print_log(out, "*E: %-20s\r\n", s);
 

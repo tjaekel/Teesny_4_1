@@ -9,6 +9,8 @@
 #include <climits>
 
 #include "tftp_server.h"
+#include "VCP_UART.h"
+#include "SYS_error.h"
 
 using namespace qindesign::network;
 
@@ -108,6 +110,7 @@ void send_data() {
   ret = tftp_state.ctx->read(tftp_state.handle, pbufout, TFTP_MAX_PAYLOAD_SIZE);
   if (ret < 0) {
     send_error(tftp_state.addr, tftp_state.port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Error occured while reading file");
+    SYSERR_Set(UART_OUT, SYSERR_TFTP);
     close_connection();
     return;
   }
@@ -144,6 +147,7 @@ void recv() {
       {
         if (tftp_state.handle != NULL) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Only one connection is supported");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
         char *filename = (char *)&pktin[1];
@@ -153,6 +157,7 @@ void recv() {
 
         if (!tftp_state.handle) {
           send_error(remote, port, TFTP_ERROR_FILE_NOT_FOUND, (char *)"*E: Unable to open file");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
@@ -176,16 +181,19 @@ void recv() {
       {
         if (tftp_state.handle == NULL) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: No connection");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
         if (tftp_state.mode_write != 0) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Not a read connection");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
         if (blk != tftp_state.blknum) {
           send_error(remote, port, TFTP_ERROR_UNKNOWN_TRFR_ID, (char *)"*E: wrong block number");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
@@ -207,17 +215,20 @@ void recv() {
       {
         if (tftp_state.handle == NULL) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: No connection");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
         if (tftp_state.mode_write != 1) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Not a write connection");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           break;
         }
 
         int ret = tftp_state.ctx->write(tftp_state.handle, pbufin, rlth - TFTP_HEADER_LENGTH);
         if (ret < 0) {
           send_error(remote, port, TFTP_ERROR_ACCESS_VIOLATION, (char *)"*E: Error writing file");
+          SYSERR_Set(UART_OUT, SYSERR_TFTP);
           close_connection();
         } else {
           send_ack(blk);
@@ -231,6 +242,7 @@ void recv() {
 
     default:
       send_error(remote, port, TFTP_ERROR_ILLEGAL_OPERATION, (char *)"*E: Unknown operation");
+      SYSERR_Set(UART_OUT, SYSERR_TFTP);
       Serial.print(op);
       break;
   }

@@ -20,8 +20,6 @@ static uint32_t nbytes, us;
 
 void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
 {
-  ////char  *f = (char *)"xx";      /WHO is doing such crab?
-
   nbytes = 0;
   ////Serial.printf("*I: opening %s %d %d\r\n", fname, write, O_READ);
   us = micros();

@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "MEM_Pool.h"
+#include "VCP_UART.h"
+#include "SYS_error.h"
 
 unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE];
 static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS];
@@ -15,6 +17,9 @@ void MEM_PoolInit(void) {
 
 void *MEM_PoolAlloc(int size)
 {
+  /* TODO: we can use last index and search from there, so that we
+   * we leave some freed segments still untouched, e.g. for DMAs
+   */
 	int i;
 	for (i = 0; i < MEM_POOL_NUM_SEGMENTS; i++)
 		if (MEMPool_mgt[i] == 0)
@@ -26,6 +31,7 @@ void *MEM_PoolAlloc(int size)
 			return &GMEMPool[MEM_POOL_SEG_SIZE * i];
 		}
 	//set syserr
+  SYSERR_Set(UART_OUT, SYSERR_MEM);
 	return NULL;						//not available, out of memory
 }
 

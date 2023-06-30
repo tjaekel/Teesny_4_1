@@ -9,6 +9,7 @@
 
 #include "SYS_config.h"
 #include "VCP_UART.h"
+#include "SYS_error.h"
 #include "UDP_send.h"
 
 using namespace qindesign::network;
@@ -60,6 +61,9 @@ int UDP_send(int port, uint8_t *pout, size_t n) {
     r = n;        //ATT: asynchronous - we return from here immediately
     return r;
   }
+
+  //set syserr
+  SYSERR_Set(UART_OUT, SYSERR_UDP);
   return r;
 }
 

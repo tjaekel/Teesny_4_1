@@ -87,6 +87,17 @@ unsigned long GPIO_GetINTHandledcounter(int num) {
     return INTHandledCount[0];
 }
 
+void GPIO_ClearCounters(int num) {
+  if (num) {
+    INTCount[1] = 0;
+    INTHandledCount[1] = 0;
+  }
+  else {
+    INTCount[0] = 0;
+    INTHandledCount[0] = 0;
+  }
+}
+
 void GPIO_thread1(void *pvParameters) {
   uint32_t ulNotifiedValue = 1;
   //we have to tell who is the receiver of the notifification, here: our own thread
@@ -175,9 +186,10 @@ void GPIO_setup(void) {
   GPIO_configPins();
 
   //configure RES output signal
+  GPIO_setOutValue(2, arduino::HIGH);
   pinMode(2, arduino::OUTPUT);
   //drive high as default
-  digitalWrite(2, arduino::HIGH);
+  ////digitalWrite(2, arduino::HIGH);
 
   //configure GPIO pin for HW INT
   pinMode(23, arduino::INPUT_PULLUP);                //enable pull-up
@@ -230,4 +242,24 @@ void GPIO_resetPin(unsigned long val) {
     digitalWrite(2, arduino::HIGH);
   else
     digitalWrite(2, arduino::LOW);
+}
+
+/* helper function to set GPIO Output register before configuring mode */
+
+void GPIO_setOutValue(uint8_t pin, uint8_t val)
+{
+	const struct digital_pin_bitband_and_config_table_struct *p;
+	uint32_t mask;
+
+	if (pin >= CORE_NUM_DIGITAL) return;
+	p = digital_pin_to_info_PGM + pin;
+	mask = p->mask;
+	{
+		// pin is configured for output mode
+		if (val) {
+			*(p->reg + 0x21) = mask; // set register
+		} else {
+			*(p->reg + 0x22) = mask; // clear register
+		}
+  }
 }
