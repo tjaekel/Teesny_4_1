@@ -314,8 +314,8 @@ void processClientData(ClientState &state) {
 
   //append a NUL for printf
   *(rxBuf + avail) = '\0';
-  //DEBUG:
-  print_log(UART_OUT, "|%s|\r\n", rxBuf);
+  if (gCFGparams.DebugFlags & DBG_NETWORK)
+    print_log(UART_OUT, "|%s|\r\n", rxBuf);
 
   //DEBUG:
   //IPAddress ip = state.client.remoteIP();

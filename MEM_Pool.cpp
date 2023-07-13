@@ -5,8 +5,8 @@
 #include "VCP_UART.h"
 #include "SYS_error.h"
 
-unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE];
-static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS];
+unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE] DMAMEM;
+static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS] DMAMEM;
 
 int MEMPool_inUse = 0;
 int MEMPool_Watermark = 0;

@@ -52,6 +52,7 @@ void LibCpuWriteSingle(struct ParseState *Parser, struct Value *ReturnValue, str
 void LibCpuReadSingle(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 #endif
 void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+void LibSpiINTfifo(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 
 void LibI2CWrite(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 void LibI2CRead(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
@@ -66,6 +67,7 @@ void LibPutGPIO(struct ParseState *Parser, struct Value *ReturnValue, struct Val
 void LibSetLED(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 void LibSetINThandler(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 void LibSetINThandler2(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+void LibDefaultINTHandler(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 
 void LibUDPSend(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 

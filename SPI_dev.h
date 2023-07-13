@@ -24,7 +24,7 @@ int  SPI_setClock(int clkspeed);
 #ifdef __cplusplus
 extern "C" {
 #endif
-int  SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len);
+int  SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len);
 #ifdef __cplusplus
 }
 #endif

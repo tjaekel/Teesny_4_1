@@ -468,7 +468,6 @@ void LibCpuReadSingle(struct ParseState *Parser, struct Value *ReturnValue, stru
 }
 #endif
 
-#if 1
 void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
     (void)Parser;
@@ -481,7 +480,27 @@ void LibSpiTrans(struct ParseState *Parser, struct Value *ReturnValue, struct Va
                                  );
     ReturnValue->Val->Integer = retVal;
 }
-#endif
+
+void LibSpiINTfifo(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Parser;
+    (void)NumArgs;
+
+    unsigned short retVal;
+    retVal = picoc_GetINTfifo(Param[0]->Val->Integer,
+                              Param[1]->Val->NativePointer,
+                              Param[2]->Val->Integer
+                             );
+    ReturnValue->Val->UnsignedShortInteger = retVal;
+}
+
+void LibDefaultINTHandler(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Parser;
+    (void)NumArgs;
+
+    picoc_DefaultINTHandlerC(Param[0]->Val->Integer);
+}
 
 void LibUDPSend(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {

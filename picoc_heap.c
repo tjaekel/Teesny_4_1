@@ -11,8 +11,14 @@
 #define FREELIST_BUCKETS 8                          /* free lists for 4, 8, 12 ... 32 byte allocs */
 #define SPLIT_MEM_THRESHOLD 16                      /* don't split memory which is close in size */
 
+#ifdef USE_EXTMEM
 EXTMEM unsigned char bottom_of_heap[HEAP_SIZE];
-EXTMEM unsigned char scriptBuf[SCRIPT_SIZE];
+////EXTMEM unsigned char scriptBuf[SCRIPT_SIZE];
+#else
+/*DMAMEM*/ unsigned char bottom_of_heap[HEAP_SIZE];
+////DMAMEM unsigned char scriptBuf[SCRIPT_SIZE];
+#endif
+
 #define  HeapMemory  bottom_of_heap
 void *HeapStart = &HeapMemory[0];
 /* static */ void *HeapBottom = &HeapMemory[HEAP_SIZE];   /* the bottom of the (downward-growing) heap */

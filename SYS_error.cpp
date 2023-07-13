@@ -21,6 +21,8 @@ static void SYSERR_printDecoded(EResultOut out, unsigned long err) {
       s = "ETH link";
     if ((err & sMask) == SYSERR_MEM)
       s = "MEM error";
+    if ((err & sMask) == SYSERR_FILE)
+      s = "File error";
     if ((err & sMask) == SYSERR_TFTP)
       s = "TFTP error";
     if ((err & sMask) == SYSERR_UDP)

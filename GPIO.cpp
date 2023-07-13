@@ -98,6 +98,8 @@ void GPIO_ClearCounters(int num) {
   }
 }
 
+static unsigned long sINTTick[2][2];
+
 void GPIO_thread1(void *pvParameters) {
   uint32_t ulNotifiedValue = 1;
   //we have to tell who is the receiver of the notifification, here: our own thread
@@ -110,8 +112,13 @@ void GPIO_thread1(void *pvParameters) {
                               &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
                               portMAX_DELAY );  /* Block indefinitely. */
 
+    sINTTick[0][0] = sINTTick[0][1];
+    sINTTick[0][1] = millis();
+
     if ( ! picoc_INThandler()) {
-      print_log(UART_OUT, "GPIO INT 0: %ld\r\n", INTCount[0]);
+      if (gCFGparams.DebugFlags & DBG_VERBOSE)
+        print_log(UART_OUT, "INT0: %ld\r\n", INTCount[0]);
+      picoc_DefaultINTHandlerC(0);
     }
     else {
       INTHandledCount[0]++;
@@ -133,8 +140,13 @@ void GPIO_thread2(void *pvParameters) {
                               &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
                               portMAX_DELAY );  /* Block indefinitely. */
 
+    sINTTick[1][0] = sINTTick[1][1];
+    sINTTick[1][1] = millis();
+
     if ( ! picoc_INThandler2()) {
-      print_log(UART_OUT, "GPIO INT 1: %ld\r\n", INTCount[1]);
+      if (gCFGparams.DebugFlags & DBG_VERBOSE)
+        print_log(UART_OUT, "INT1: %ld\r\n", INTCount[1]);
+      picoc_DefaultINTHandlerC(1);
     }
     else {
       INTHandledCount[1]++;
@@ -142,6 +154,16 @@ void GPIO_thread2(void *pvParameters) {
 
     sHandlerRunning[1] = 0;
   }
+}
+
+unsigned long GPIO_GetINTFreq(int num) {
+  unsigned long div;
+  div = sINTTick[num][1] - sINTTick[num][0];
+  if (div) {
+    return 1000 / div;
+  }
+  else
+    return 1001;
 }
 
 void GPIO_configPins(void) {
@@ -254,12 +276,26 @@ void GPIO_setOutValue(uint8_t pin, uint8_t val)
 	if (pin >= CORE_NUM_DIGITAL) return;
 	p = digital_pin_to_info_PGM + pin;
 	mask = p->mask;
-	{
-		// pin is configured for output mode
-		if (val) {
-			*(p->reg + 0x21) = mask; // set register
-		} else {
-			*(p->reg + 0x22) = mask; // clear register
-		}
+	// pin is configured for output mode
+	if (val) {
+		*(p->reg + 0x21) = mask; // set register
+	} else {
+		*(p->reg + 0x22) = mask; // clear register
+	}
+}
+
+void GPIO_testSpeed(void) {
+#if 0
+  /* this is 10x faster! assuming, this code runs on ITCM */
+  while (1) {
+    GPIO_setOutValue(32, arduino::HIGH);
+    GPIO_setOutValue(32, arduino::LOW);
   }
+#else
+  /* this is 10x slower! assuming the function sits on external flash (and is not cached or running full speed) */
+  while (1) {
+    digitalWriteFast(32, arduino::HIGH);
+    digitalWriteFast(32, arduino::LOW);
+  }
+#endif
 }

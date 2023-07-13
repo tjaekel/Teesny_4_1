@@ -18,5 +18,8 @@ void GPIO_config(unsigned long dir, unsigned long od);
 void GPIO_resetPin(unsigned long val);
 
 void GPIO_setOutValue(uint8_t pin, uint8_t val);
+void GPIO_testSpeed(void);
+
+unsigned long GPIO_GetINTFreq(int num);
 
 #endif

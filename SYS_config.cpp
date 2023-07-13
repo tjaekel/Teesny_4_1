@@ -19,6 +19,7 @@ static tCFGParams sCFGparamsDefault = {
   .GPIOod = 0,
   .GPIOval = 0,
   .DebugFlags = 0,
+  .CfgFlags = 0,
 };
 
 static const char *CFG_string(int i) {
@@ -35,6 +36,7 @@ static const char *CFG_string(int i) {
     case  9: return "GPIO open drain";
     case 10: return "GPIO out default";
     case 11: return "Debug flags";
+    case 12: return "Config flags";
 
     default: return "unknown";
   }

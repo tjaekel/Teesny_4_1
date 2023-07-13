@@ -80,7 +80,7 @@ unsigned char *PlatformReadFile(const char *FileName)
 	/* read a file via TeraTerm */
 	unsigned char *SourceStr;
 	int c;
-	////SourceStr = malloc(MAX_SCRIPT_SIZE);
+	////SourceStr = (unsigned char *)malloc(MAX_SCRIPT_SIZE);
 	SourceStr = scriptBuf;
 	if (SourceStr)
 	{
@@ -104,12 +104,17 @@ unsigned char *PlatformReadFile(const char *FileName)
 #else
   int l;
 	/* use SD Card to read a file with Pico-C statements */
-  l = SDCARD_ReadFile(FileName, scriptBuf);
-  if (l) {
-    scriptBuf[l] = '\0';
-    return scriptBuf;
+  unsigned char *scriptBuf = (unsigned char *)malloc(MAX_SCRIPT_SIZE);
+  if (scriptBuf) {
+    l = SDCARD_ReadFile(FileName, scriptBuf);
+    if (l) {
+      scriptBuf[l] = '\0';
+      return scriptBuf;
+    }
+    free(scriptBuf);
+	  return NULL;
   }
-	return NULL;
+  return NULL;
 #endif
 }
 
@@ -138,6 +143,8 @@ void PlatformScanFile(const char *FileName)
       {
     		CleanupText = NULL;
       }
+
+      free(SourceStr);
     }
 }
 

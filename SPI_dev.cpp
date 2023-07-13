@@ -58,7 +58,7 @@ int SPI_setClock(int clkspeed) {
 }
 
 #ifdef SPI_DMA_MODE
-int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
+int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len) {
   //place semaphore around it, so we can use in concurrent INT handlers
   if( xSemaphoreTake( xSemaphore, ( TickType_t ) 1000 ) == pdTRUE ) {
     if (num) {
@@ -82,7 +82,7 @@ int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
 }
 #else
 #if 0
-int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
+int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len) {
 	SPI.beginTransaction(SPIsettings);
 	digitalWrite(ssPin, LOW);
 	while (len--) {
@@ -94,7 +94,7 @@ int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
 	return 0;		//no error
 }
 #else
-int SPI_transaction(int num, unsigned char *tx, unsigned char *rx, int len) {
+int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len) {
   if (num) {
 	  SPI.beginTransaction(SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
 	  digitalWrite(ssPin2, arduino::LOW);

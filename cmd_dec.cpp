@@ -5,6 +5,7 @@
 #include <string.h>
 ////#include <core_cm7.h>       //for "fwreset" - does not work! - files and defines for FPU missing, compile error!
 
+#include "define_sys.h"
 #include "MEM_Pool.h"
 #include "cmd_dec.h"
 #include "define_sys.h"
@@ -17,6 +18,8 @@
 #include "UDP_send.h"
 #include "TCP_Server.h"
 #include "SYS_error.h"
+
+#include "CHIP_spi_cmd.h"
 
 /* prototypes */
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
@@ -59,10 +62,39 @@ ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out);
 
-const TCMD_DEC_Command Commands[] = {
+/* chip specific SPI commands */
+ECMD_DEC_Status CMD_cid(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_rreg(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_wreg(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_peek(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_poke(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_sysc(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_concur(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_rblk(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_wblk(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_noop(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_tir(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_pgqset(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_pgset(TCMD_DEC_Results *res, EResultOut out);
+ECMD_DEC_Status CMD_pgget(TCMD_DEC_Results *res, EResultOut out);
+
+ECMD_DEC_Status CMD_check(TCMD_DEC_Results *res, EResultOut out);
+#ifdef WITH_SDCARD
+ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out);
+#endif
+
+/* other expert commands */
+ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out);
+
+//const char chelp[] FASTRUN = "help";    //DMAMEM fails! - cannot find command, reason: (NOLOAD)
+//const char hhelp[] FASTRUN = "list of all defined commands or help for [cmd]";
+
+const TCMD_DEC_Command Commands[] /*FASTRUN*/ = {
 		{
 				.cmd = (const char *)"help",
 				.help = (const char *)"list of all defined commands or help for [cmd]",
+        //.cmd = chelp,
+        //.help = hhelp,
 				.func = CMD_help
 		},
     {
@@ -113,7 +145,7 @@ const TCMD_DEC_Command Commands[] = {
 		},
 		{
 				.cmd = (const char*)"sdexec",
-				.help = (const char*)"execute <fname> as script file",
+				.help = (const char*)"execute <fname> [-s] as script file",
 				.func = CMD_sdexec
 		},
 		{
@@ -224,6 +256,95 @@ const TCMD_DEC_Command Commands[] = {
 				.cmd = (const char*)"res",
 				.help = (const char*)"set RESET pin <0|1>",
 				.func = CMD_res
+		},
+    /* chip specific SPI cpommands */
+    {
+				.cmd = (const char*)"cid",
+				.help = (const char*)"read ChipID [-P|-A]",
+				.func = CMD_cid
+		},
+    {
+				.cmd = (const char*)"rreg",
+				.help = (const char*)"read register current bank [-P|-A] <addr>",
+				.func = CMD_rreg
+		},
+    {
+				.cmd = (const char*)"wreg",
+				.help = (const char*)"write register current bank [-P|-A] <addr> [val]",
+				.func = CMD_wreg
+		},
+    {
+				.cmd = (const char*)"peek",
+				.help = (const char*)"read register [-P|-A] <bankaddr>",
+				.func = CMD_peek
+		},
+    {
+				.cmd = (const char*)"poke",
+				.help = (const char*)"write register [-P|-A] <bankaddr> [val]",
+				.func = CMD_poke
+		},
+    {
+				.cmd = (const char*)"sysc",
+				.help = (const char*)"reset command [-P|-A] [val]",
+				.func = CMD_sysc
+		},
+    {
+				.cmd = (const char*)"rblk",
+				.help = (const char*)"read block [-P|-A] <blkaddr> [num_words]",
+				.func = CMD_rblk
+		},
+    {
+				.cmd = (const char*)"wblk",
+				.help = (const char*)"write block [-P|-A] <blkaddr> [word ...]",
+				.func = CMD_wblk
+		},
+    {
+				.cmd = (const char *)"noop",
+				.help = (const char *)"send NOOP [-P|-A] [nop_code [num]]",
+				.func = CMD_noop
+		},
+    {
+				.cmd = (const char *)"tir",
+				.help = (const char *)"get TIR [-P|-A] checksum",
+				.func = CMD_tir
+		},
+		{
+				.cmd = (const char *)"pgqset",
+				.help = (const char *)"register page set q-type [-P|-A] [pgnum]",
+				.func = CMD_pgqset
+		},
+		{
+				.cmd = (const char *)"pgset",
+				.help = (const char *)"register page set [-P|-A] [pgnum]",
+				.func = CMD_pgset
+		},
+		{
+				.cmd = (const char *)"pgget",
+				.help = (const char *)"register page get [-P|-A]",
+				.func = CMD_pgget
+		},
+    {
+				.cmd = (const char*)"concur",
+				.help = (const char*)"concurent [-P|-A] <cmd> [; cmd ...]",
+				.func = CMD_concur
+		},
+    {
+				.cmd = (const char*)"check",
+				.help = (const char*)"decode FIFO data [-P|-A] [fmt]",
+				.func = CMD_check
+		},
+#ifdef WITH_SDCARD
+    {
+				.cmd = (const char*)"sdload",
+				.help = (const char*)"load file [-P|-A] <bllkaddr> <fname> via WBLK",
+				.func = CMD_sdload
+		},
+#endif
+    /* other test/debug commands, for expert */
+    {
+				.cmd = (const char*)"test",
+				.help = (const char*)"debug: test",
+				.func = CMD_test
 		},
 };
 
@@ -472,9 +593,8 @@ static unsigned int CMD_lineLen(const char *str, int entireLine)
 	return l;
 }
 
-#if 0
 /* helper function to find string <filename> after a value <IDX> */
-static const char * CMD_nextStr(const char *str)
+const char * CMD_nextStr(const char *str)
 {
 	const char *resStr = NULL;		/* set to invalid result */
 
@@ -499,7 +619,6 @@ static const char * CMD_nextStr(const char *str)
 
 	return resStr;
 }
-#endif
 
 /* other helper functions */
 
@@ -583,13 +702,40 @@ void hex_dump(unsigned char *ptr, int len, int mode, EResultOut out)
 	}
 }
 
+/* verify the option and get the SPI interface number - starting at 1 */
+int CMD_getSPIoption(char *str)
+{
+  if (str) {
+	  if (strncmp(str, "-A", 2) == 0)
+		  return 1;
+	  //dummy SPI
+	  ////if (strncmp(str, "-D", 2) == 0)
+	  ////	return 6;
+  }
+
+	return 0;		//-P is default
+}
+
 /**
  * ----------------------------------------------------------------------------
  */
 
+void f(const char *str) {
+  Serial.printf("XX: %lx\r\n", (unsigned long)str);
+  Serial.printf("YY: %s\r\n", str);   //FAILS, when str is on DMAMEM!
+}
+
+#define FSTR(str) ({static const char data[] FASTRUN = (str); &data[0];})
+#define RSTR(str) ({static const char data[]         = (str); &data[0];}) //Regular, on DTCM (RAM1)
+#define DSTR(str) ({static const char data[] DMAMEM  = (str); &data[0];})
+
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 {
 	unsigned int idx;
+
+  print_log(UART_OUT, "XX: %lx | %lx\r\n", (unsigned long)&Commands, (unsigned long)Commands[0].help);
+  f("STRING");
+  f("STRING");
 
 	if (res->str)
 	{
@@ -615,12 +761,15 @@ ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 
 ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
 {
+  extern uint32_t MCUCoreFrequency;
+
   int inUse, watermark, max;
   print_log(out, "FW version   : %s\r\n", VERSION_NUMBER);
   MEM_PoolCounters(&inUse, &watermark, &max);
   print_log(out, "MEMPool      : %d | %d | %d\r\n", inUse, watermark, max);
   print_log(out, "HTTP clients : %d\r\n", HTTPD_GetClientNumber());
   print_log(out, "ETH link     : %d\r\n", HTTPD_GetETHLinkState());
+  print_log(out, "MCU clock    : %ld\r\n", MCUCoreFrequency);
 
   return CMD_DEC_OK;
 }
@@ -676,25 +825,31 @@ ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out)
 }
 
 #ifdef WITH_SDCARD
-ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out)
-{
-	(void)res;
+ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
+  if (res->val[0])
+    SDCARD_setup(out);
+  else
+    SDCARD_deinit();
 
-	SDCARD_ShowDir(out);
+  return CMD_DEC_OK;
+}
 
-	return CMD_DEC_OK;
+ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
+  SDCARD_printDirectory("/", 0, out);
+
+  return CMD_DEC_OK;
 }
 
 ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results* res, EResultOut out)
 {
-	SDCARD_PrintFile(out, res->str);
+	SDCARD_PrintFile(res->str, out);
 
 	return CMD_DEC_OK;
 }
 
 ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out)
 {
-	SDCARD_Exec(out, res->str);
+	SDCARD_Exec(res, out);
 
 	return CMD_DEC_OK;
 }
@@ -702,7 +857,7 @@ ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out)
 ECMD_DEC_Status CMD_sdformat(TCMD_DEC_Results* res, EResultOut out)
 {
 	(void)res;
-	SDCARD_Format(out);
+	////SDCARD_Format(out);
 
 	return CMD_DEC_OK;
 }
@@ -774,10 +929,7 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
   if (res->num == 0)
 		return CMD_DEC_INVALID;	//we need at least one byte
 
-  if (res->opt) {
-    if (strncmp(res->opt, "-A", 2) == 0)
-      dev = 1;
-  }
+  dev = CMD_getSPIoption(res->opt);
 
   SPIbufTx = (unsigned char *)MEM_PoolAlloc(CMD_DEC_NUM_VAL);
   if (SPIbufTx) {
@@ -820,10 +972,7 @@ ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
   if (res->num == 0)
 		return CMD_DEC_INVALID;	//we need at least one byte
 
-  if (res->opt) {
-    if (strncmp(res->opt, "-A", 2) == 0)
-      dev = 1;
-  }
+  dev = CMD_getSPIoption(res->opt);
 
   /* we allocate maximum for 32bit words, even used shorter later */
   SPIbufTx = (unsigned char *)MEM_PoolAlloc(4 * CMD_DEC_NUM_VAL);
@@ -949,21 +1098,6 @@ ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
-  if (res->val[0])
-    SDCARD_setup(out);
-  else
-    SDCARD_deinit();
-
-  return CMD_DEC_OK;
-}
-
-ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
-  SDCARD_printDirectory("/", 0, out);
-
-  return CMD_DEC_OK;
-}
-
 ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   if (res->opt) {
     if (strncmp(res->opt, "-d", 2) == 0) {
@@ -999,6 +1133,8 @@ ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
 
   print_log(out, "INT cnt        : %ld\r\n", GPIO_GetINTcounter(dev));
   print_log(out, "INT handled cnt: %ld\r\n", GPIO_GetINTHandledcounter(dev));
+  print_log(out, "INT_STATUS     : %04x\r\n", picoc_GetINTStatus(dev));
+  print_log(out, "INT frequency  : %ld [Hz]\r\n", GPIO_GetINTFreq(dev));
 
   return CMD_DEC_OK;
 }
@@ -1055,13 +1191,6 @@ ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
   }
 
   return CMD_DEC_OK;
-}
-
-ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results *res, EResultOut out)
-{
-	SDCARD_PrintFile(res->str, out);
-
-	return CMD_DEC_OK;
 }
 
 ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out)
@@ -1163,7 +1292,7 @@ ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
   unsigned long val;
 
   val = GPIOgetPins();
-  print_log(out, "GPIOs: %08lx\r\n", val);
+  print_log(out, (const char *)"GPIOs: %08lx\r\n", val);
 
   return CMD_DEC_OK;
 }
@@ -1176,3 +1305,80 @@ ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
+/* chip specific SPI commands */
+ECMD_DEC_Status CMD_cid(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_cid(res, out);
+}
+
+ECMD_DEC_Status CMD_rreg(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_rreg(res, out);
+}
+
+ECMD_DEC_Status CMD_wreg(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_wreg(res, out);
+}
+
+ECMD_DEC_Status CMD_peek(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_peek(res, out);
+}
+
+ECMD_DEC_Status CMD_poke(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_poke(res, out);
+}
+
+ECMD_DEC_Status CMD_sysc(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_sysc(res, out);
+}
+
+ECMD_DEC_Status CMD_concur(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_concur(res, out);
+}
+
+ECMD_DEC_Status CMD_rblk(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_rblk(res, out);
+}
+
+ECMD_DEC_Status CMD_wblk(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_wblk(res, out);
+}
+
+ECMD_DEC_Status CMD_noop(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_noop(res, out);
+}
+
+ECMD_DEC_Status CMD_tir(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_tir(res, out);
+}
+
+ECMD_DEC_Status CMD_pgqset(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_pgqset(res, out);
+}
+
+ECMD_DEC_Status CMD_pgset(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_pgset(res, out);
+}
+
+ECMD_DEC_Status CMD_pgget(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_pgget(res, out);
+}
+
+
+ECMD_DEC_Status CMD_check(TCMD_DEC_Results *res, EResultOut out) {
+  picoc_decodePRIfifo();
+  return CMD_DEC_OK;
+}
+
+#ifdef WITH_SDCARD
+ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out) {
+  return CHIP_sdload(res, out);
+}
+#endif
+
+/* other test, debug commands */
+ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
+  (void)out;
+
+  GPIO_testSpeed();
+
+  return CMD_DEC_OK;
+}

@@ -4,7 +4,7 @@
 ////using namespace std;
 
 /* define system macros, stack size etc. */
-#define VERSION_NUMBER  "V1.2"
+#define VERSION_NUMBER  "V1.4"
 #define VERSION_STRING  "\r\n---- Teensy FW: " VERSION_NUMBER " ----"
 
 /* thread definitions */
@@ -37,6 +37,7 @@ typedef struct structCFGParams {
   unsigned long GPIOod;             //if output: as Open Drain
   unsigned long GPIOval;            //default values at startup
   unsigned long DebugFlags;
+  unsigned long CfgFlags;
 } tCFGParams;
 
 extern tCFGParams gCFGparams;

@@ -866,6 +866,7 @@ const struct LibraryFunction CLibrary[] =
 #endif
 
     { LibSpiTrans,      "int SpiTransaction(unsigned char *,unsigned char *,int);" },
+    { LibSpiINTfifo,    "unsigned short SpiINTfifo(int,unsigned char *,int);" },
 #if 0
     { LibI2CRead,       "int I2CRead(unsigned char,unsigned char,unsigned char *,int,int);" },
     { LibI2CWrite,      "int I2CWrite(unsigned char,unsigned char *,int,int);" },
@@ -878,8 +879,9 @@ const struct LibraryFunction CLibrary[] =
 
     { LibUDPSend,      "int UDPsend(int port,unsigned char *,unsigned long);" },
 
-	  { LibSetINThandler,	  "void SetINTHandler(char *);" },
-    { LibSetINThandler2,  "void SetINTHandler2(char *);" },
+	  { LibSetINThandler,	      "void SetINTHandler(char *);" },
+    { LibSetINThandler2,      "void SetINTHandler2(char *);" },
+    { LibDefaultINTHandler,   "void DefaultINTHandler(int);" },
 
     { LibMethodSize,    "int size();"},	//use as: variable.size() - returns number of elements for arrays
 

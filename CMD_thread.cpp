@@ -10,7 +10,6 @@
 #include "SYS_config.h"
 
 void CMD_loop(void) {
-#if 1
   char* UARTcmd = NULL;
 
   UARTcmd = VCP_UART_getString();
@@ -19,11 +18,8 @@ void CMD_loop(void) {
     VCP_UART_printPrompt();
   }
   else {
-    vTaskDelay(1);
+    ////vTaskDelay(1);        //already part of UART_getString()
   }
-#else
-  Serial.println("*");
-#endif
 }
 
 void CMD_thread(void *pvParameters) {

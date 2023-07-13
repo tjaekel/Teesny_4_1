@@ -3,6 +3,7 @@
 #define __DEBUG_SYS__
 
 /* ------------------------- configuration ---------------------------------*/
+#define WITH_SDCARD
 //#define STATIC_IP
 //#define DEBUG                                       //UART as debug log for this code
 //#define WAIT_FOR_UART                               //on startup: wait for UART connected or not

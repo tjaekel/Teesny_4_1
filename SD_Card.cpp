@@ -2,6 +2,9 @@
 #include <SD.h>
 #include "VCP_UART.h"
 #include "SD_Card.h"
+#include "cmd_dec.h"
+#include "MEM_Pool.h"
+#include "SYS_error.h"
 
 // change this to match your SD shield or module;
 // Teensy 2.0: pin 0
@@ -29,9 +32,18 @@ void SDCARD_setup(EResultOut out) {
 
   SDCARD_printDirectory("/", 0, out);
 }
+
+void SDCARD_ShowDir(EResultOut out) {
+  SDCARD_printDirectory("/", 0, out);
+}
+
 void SDCARD_deinit(void) {
   ////SD.end();//does not exist!
   SDCARD_init = 0;
+}
+
+int SDCARD_GetStatus(void) {
+  return  SDCARD_init;
 }
 
 void SDCARD_printDirectory(const char *str, int numSpaces, EResultOut out) {
@@ -143,4 +155,132 @@ int SDCARD_ReadFile(const char *file, unsigned char *b) {
     Serial.println(file);
     return 0;
   }
+}
+
+int SDCARD_fgets(char *p, int len, void *file) {
+  int i = 0;
+  int state = 0;
+  static char pbChar = '\0';
+  File *f = (File *)file;
+
+  if (pbChar != '\0') {
+    *p++ = pbChar;
+    i++;
+    pbChar = '\0';
+  }
+
+  while (f->available()) {
+    *p = (char)f->read();
+    i++;
+
+    if ((*p == '\r') || (*p == '\n'))
+      state = 1;
+    else {
+      if (state) {
+        pbChar = *p;
+        break;
+      }
+    }
+
+    p++;
+    i++;
+
+    if (i >= len)
+      break;
+  }
+
+  *p = '\0';
+
+  return i;
+}
+
+#define FILE_LINE_SIZE  MEM_POOL_SEG_SIZE
+
+ECMD_DEC_Status SDCARD_Exec(TCMD_DEC_Results *res, EResultOut out)
+{
+	char *fileLine;		/* buffer for single line */
+	int silent = 0;
+  ECMD_DEC_Status err = CMD_DEC_OK;
+
+	if(SDCARD_GetStatus() && res->str)
+	{
+		fileLine = (char *)MEM_PoolAlloc(FILE_LINE_SIZE);
+		if ( ! fileLine)
+		{
+			return CMD_DEC_OOMEM;
+		}
+
+    if (res->opt)
+		  if (strncmp(res->opt, "-s", 2) == 0)
+			  silent = 1;
+
+    File MyFile = SD.open(res->str);
+		if( ! MyFile)
+		{
+			MEM_PoolFree(fileLine);
+			return CMD_DEC_ERROR;			//error
+		}
+		else
+		{
+		    while (SDCARD_fgets(fileLine, FILE_LINE_SIZE -1, &MyFile) != 0)
+		    {
+		    	if ( ! silent)
+		    	{
+#if 0
+		    		/* print to see as log what came from file, '$' is 'file prompt' */
+		    		UART_Send((const char *)"$ ", 2, out);
+		    		/* log entire line - even with comments */
+		    		UART_Send((const char *)fileLine, (int)strlen(fileLine), out);
+		    		if (out != HTTPD_OUT)
+		    			/* just in case there is not '\r' in file, just Linux '\n' */
+		    			UART_Send((const char *)"\r", 1, out);
+#else
+		    		/* strip of the comments */
+		    		{
+		    			char *strComment;
+		    			int strLenLine;
+		    			int appendNL = 0;
+		    			strComment = strchr(fileLine, '#');
+		    			if (strComment)
+		    			{
+		    				strLenLine = strComment - fileLine;
+		    				if (strLenLine)				/* avoid empty line if just commented line */
+		    					appendNL = 2;
+		    			}
+		    			else
+		    			{
+		    				strLenLine = (int)strlen(fileLine);
+		    				/* is there a \r from file? we assume there is always a \n from Unix file */
+		    				if (strchr(fileLine, '\r') == NULL)
+		    					appendNL = 1;
+		    			}
+		    			if (strLenLine)
+		    			{
+		    				UART_Send((const char *)"$ ", 2, out);
+		    				UART_Send((const char *)fileLine, strLenLine, out);
+		    			}
+		    			else
+		    				continue;
+		    			if (appendNL == 2)
+		    				UART_Send((const char *)"\r\n", 2, out);
+		    			if (appendNL == 1)
+		    				UART_Send((const char *)"\r", 1, out);		//it becomes \n\r
+		    		}
+#endif
+		    	}
+
+		    	/* now execute command */
+		    	CMD_DEC_execute(fileLine, out);
+
+		    	/* Q: should we stop on first CMD error, e.g. wrong command? */
+		    } /* end while */
+
+		    MyFile.close();
+
+		    MEM_PoolFree(fileLine);
+		    return err;
+		}
+	}
+	else
+		return CMD_DEC_ERROR;
 }

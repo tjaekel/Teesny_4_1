@@ -23,9 +23,14 @@ void VCP_UART_setup(void)
 char* VCP_UART_getString(void)
 {
     int incomingByte;
+    static int available = 0;
 
-    if (Serial.available() > 0) {
+    if ( ! available)
+      available = Serial.available();
+
+    if (available > 0) {
         incomingByte = Serial.read();
+        available--;
         
         if (incomingByte == 0x08) {
             if (numAvail) {
@@ -63,8 +68,11 @@ char* VCP_UART_getString(void)
             return UARTbuffer;
         }
     }
+    else {
+      ////vTaskDelay(1);
+      taskYIELD();
+    }
 
-    vTaskDelay(1);
     return NULL;
 }
 
@@ -86,8 +94,7 @@ void VCP_UART_hexDump(unsigned char* b, int len) {
 
 void UART_printString(const char *s, EResultOut out) {
   if (out == UART_OUT) {
-    while (*s)
-      Serial.print(*s++);
+    Serial.print(s);
 
     return;
   }
@@ -179,8 +186,11 @@ int UART_getString(unsigned char *b, size_t l)
             return x;
         }
     }
+    else {
+      ////vTaskDelay(1);
+      taskYIELD();
+    }
 
-    vTaskDelay(1);
     return 0;
 }
 
@@ -190,7 +200,8 @@ int UART_getChar(void) {
       return Serial.read();
     }
 
-    vTaskDelay(1);
+    ////vTaskDelay(1);
+    taskYIELD();
   }
 }
 

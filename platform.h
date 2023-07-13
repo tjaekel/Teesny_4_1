@@ -11,21 +11,28 @@
 #define LARGE_INT_POWER_OF_TEN		10000	/* the largest power of ten which fits in an int on this architecture */
 #define ALIGN_TYPE void *                   /* the data type to use for alignment */
 
-#define GLOBAL_TABLE_SIZE           100     /* global variable table */
-#define STRING_TABLE_SIZE           100     /* shared string table size */
-#define STRING_LITERAL_TABLE_SIZE   100     /* string literal table size */
-#define PARAMETER_MAX				 10     /* maximum number of parameters to a function */
-#define LINEBUFFER_MAX			   1024     /* maximum number of characters on a line */
-#define LOCAL_TABLE_SIZE			 20     /* size of local variable table (can expand) */
-#define STRUCT_TABLE_SIZE			 20 	/* size of struct/union member table (can expand) */
+#define GLOBAL_TABLE_SIZE            20     /* global variable table */
+#define STRING_TABLE_SIZE            20     /* shared string table size */
+#define STRING_LITERAL_TABLE_SIZE    20     /* string literal table size */
+#define PARAMETER_MAX				          6     /* maximum number of parameters to a function */
+#define LINEBUFFER_MAX			        256     /* maximum number of characters on a line */
+#define LOCAL_TABLE_SIZE			       20     /* size of local variable table (can expand) */
+#define STRUCT_TABLE_SIZE			       20 	  /* size of struct/union member table (can expand) */
 
 #define INTERACTIVE_PROMPT_STATEMENT	"\r\n: "  //XXXX modified
 ////#define INTERACTIVE_PROMPT_LINE			": "
 
 #define PlatformSetExitPoint() setjmp(ExitBuf)
 
+////#define USE_EXTMEM
+
 #define SCRIPT_SIZE_BYTES     (1024 * 8)                                      //size for scripts to load and parse
+
+#ifdef USE_EXTMEM
 #define SDRAM_SIZE_BYTES      ((1024 * 1024 * (8 + 8)) - SCRIPT_SIZE_BYTES)   //check, how much EXTMEM is available!
+#else
+#define SDRAM_SIZE_BYTES      (1024 * 64 * 2)
+#endif
 
 #define HEAP_SIZE   (SDRAM_SIZE_BYTES)			/* space for the heap and the stack, minimal >2K */
 #define SCRIPT_SIZE (SCRIPT_SIZE_BYTES)     /* space for scripts from SD card file */

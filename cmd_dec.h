@@ -69,4 +69,7 @@ ECMD_DEC_Status CMD_DEC_execute(char *cmd, EResultOut out);
 }
 #endif
 
+extern int CMD_getSPIoption(char *str);
+extern const char * CMD_nextStr(const char *str);
+
 #endif /* CMD_DEC_H_ */

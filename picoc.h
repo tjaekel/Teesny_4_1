@@ -470,11 +470,17 @@ void 	  picoc_ClearStopped(void);
 void    picoc_MsSleep(unsigned long ms);
 int     picoc_ExecuteCommand(char *s);
 int     picoc_SpiTransaction(unsigned char *tx, unsigned char *rx, int bytes);
+unsigned short picoc_GetINTfifo(int num, unsigned char *rx, int bytes);
 int     picoc_I2CRead(unsigned char slaveAddr, unsigned char regAddr, unsigned char *data, int bytes, int flags);
 int     picoc_I2CWrite(unsigned char slaveAddr, unsigned char *data, int bytes, int flags);
 void    picoc_WriteGPIO(unsigned long val);
 unsigned long picoc_ReadGPIO(void);
 
+unsigned short picoc_GetINTStatus(int num);
+
+void picoc_DefaultINTHandlerC(int num);
+
+void picoc_decodePRIfifo(void);
 #ifdef __cplusplus
 }
 #endif
