@@ -17,7 +17,7 @@ unsigned long INTHandledCount[2] = {0, 0};
 static TaskHandle_t xTaskToNotify[2] = {NULL, NULL};
 static volatile int sHandlerRunning[2] = {0, 0};
 
-tGPIOcfg GPIOpins[] = {
+const tGPIOcfg GPIOpins[] = {
   {28, "pin 28"},
   {29, "pin 29"},
   {30, "pin 30"},
@@ -156,7 +156,7 @@ void GPIO_thread2(void *pvParameters) {
   }
 }
 
-unsigned long GPIO_GetINTFreq(int num) {
+FLASHMEM unsigned long GPIO_GetINTFreq(int num) {
   unsigned long div;
   div = sINTTick[num][1] - sINTTick[num][0];
   if (div) {
@@ -166,7 +166,7 @@ unsigned long GPIO_GetINTFreq(int num) {
     return 1001;
 }
 
-void GPIO_configPins(void) {
+FLASHMEM void GPIO_configPins(void) {
   size_t i;
   unsigned long mask = 0x1;
 
@@ -196,14 +196,14 @@ void GPIO_configPins(void) {
   }
 }
 
-void GPIO_config(unsigned long dir, unsigned long od) {
+FLASHMEM void GPIO_config(unsigned long dir, unsigned long od) {
   gCFGparams.GPIOdir = dir;
   gCFGparams.GPIOod = od;
 
   GPIO_configPins();
 }
 
-void GPIO_setup(void) {
+FLASHMEM void GPIO_setup(void) {
   //configure user GPIO pins
   GPIO_configPins();
 

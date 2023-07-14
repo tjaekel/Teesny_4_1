@@ -31,7 +31,7 @@
 #ifdef USE_EXTMEM
 #define SDRAM_SIZE_BYTES      ((1024 * 1024 * (8 + 8)) - SCRIPT_SIZE_BYTES)   //check, how much EXTMEM is available!
 #else
-#define SDRAM_SIZE_BYTES      (1024 * 64 * 2)
+#define SDRAM_SIZE_BYTES      (1024 * 32 * 4)
 #endif
 
 #define HEAP_SIZE   (SDRAM_SIZE_BYTES)			/* space for the heap and the stack, minimal >2K */

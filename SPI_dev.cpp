@@ -27,7 +27,7 @@ static SemaphoreHandle_t xSemaphore;
 #define ssPin2   9
 SPISettings SPIsettings(16000000, arduino::LSBFIRST, SPI_MODE0);
 
-void SPI_setup(void) {
+FLASHMEM void SPI_setup(void) {
   
   GPIO_setOutValue(ssPin, arduino::HIGH);
 	pinMode(ssPin, arduino::OUTPUT);

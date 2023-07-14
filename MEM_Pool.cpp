@@ -11,7 +11,7 @@ static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS] DMAMEM;
 int MEMPool_inUse = 0;
 int MEMPool_Watermark = 0;
 
-void MEM_PoolInit(void) {
+FLASHMEM void MEM_PoolInit(void) {
   memset(MEMPool_mgt, 0, sizeof(MEMPool_mgt));
 }
 

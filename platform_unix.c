@@ -104,7 +104,7 @@ unsigned char *PlatformReadFile(const char *FileName)
 #else
   int l;
 	/* use SD Card to read a file with Pico-C statements */
-  unsigned char *scriptBuf = (unsigned char *)malloc(MAX_SCRIPT_SIZE);
+  unsigned char *scriptBuf = (unsigned char *)malloc(SCRIPT_SIZE);
   if (scriptBuf) {
     l = SDCARD_ReadFile(FileName, scriptBuf);
     if (l) {

@@ -15,7 +15,7 @@ char HTTPDPrintBuf[HTTPD_PRINT_LEN];
 
 static int HTTPDOutIdx = 0;
 
-void VCP_UART_setup(void)
+FLASHMEM void VCP_UART_setup(void)
 {
 	////Serial.begin(1843200);                        //baudrate does not matter: VCP UART via USB
 }

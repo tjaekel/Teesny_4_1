@@ -42,7 +42,7 @@ static const char *CFG_string(int i) {
   }
 }
 
-int CFG_Read(void) {
+FLASHMEM int CFG_Read(void) {
   EEPROM.get(0, gCFGparams);
 
   //set the TCP server IP address
@@ -57,7 +57,7 @@ int CFG_Write(void) {
   return 0;
 }
 
-void CFG_Print(EResultOut out) {
+FLASHMEM void CFG_Print(EResultOut out) {
   size_t i;
   unsigned long *ptr = (unsigned long *)&gCFGparams;
   for (i = 0; i < (sizeof(tCFGParams) / sizeof(unsigned long)); i++) {
@@ -65,11 +65,11 @@ void CFG_Print(EResultOut out) {
   }
 }
 
-void CFG_SetDefault(void) {
+FLASHMEM void CFG_SetDefault(void) {
   memcpy(&gCFGparams, &sCFGparamsDefault, sizeof(tCFGParams));
 }
 
-void CFG_Set(unsigned long idx, unsigned long val) {
+FLASHMEM void CFG_Set(unsigned long idx, unsigned long val) {
   if (idx < (sizeof(tCFGParams) / sizeof(unsigned long))) {
     ((unsigned long *)&gCFGparams)[idx] = val;
   }

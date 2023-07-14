@@ -97,7 +97,7 @@ static void TCP_Server_thread(void *pvParameters);
 // Forward declarations
 void tellServer(bool hasIP, bool linkState);
 
-void TCP_Server_setup(void) {
+FLASHMEM void TCP_Server_setup(void) {
 #if 0
   Serial.begin(115200);
   while (!Serial && millis() < 4000) {

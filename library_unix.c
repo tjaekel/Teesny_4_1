@@ -31,8 +31,8 @@ void Cerrormsg (struct ParseState *Parser, struct Value *ReturnValue, struct Val
 /* list of all library functions and their prototypes */
 struct const LibraryFunction PlatformLibrary[] =
 {
-    { Clineno,      "int lineno();" },
-    { Cerrormsg,    "void errorprintf(char *,...);" },
+    { Clineno,      (const char *)"int lineno();" },
+    { Cerrormsg,    (const char *)"void errorprintf(char *,...);" },
     { NULL,         NULL }
 };
 #endif

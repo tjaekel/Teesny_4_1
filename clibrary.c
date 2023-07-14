@@ -766,124 +766,125 @@ void LibHelp(struct ParseState *Parser, struct Value *ReturnValue, struct Value 
 const struct LibraryFunction CLibrary[] =
 {
 #if 1
-    { LibPrintf,        "void printf(char *,...);" },
-    { LibPrintLog,      "void print_log(char *,...);" },
-    { LibPrintErr,      "void error_log(char *,...);" },
-    { LibPrintf,        "void $display(char *,...);" },
-    { LibSPrintf,       "char *sprintf(char *,char *, ...);" },
-    { LibUVMSPrintf,    "char *$sformatf(char *,...);" },
-    { LibUVMSPrintf,    "char *$psprintf(char *,...);" },
-    { LibGets,          "void gets(char *,int);" },
-    { LibGetc,          "int getchar();" },
-    { LibExit,          "void exit(int);" },
-    { LibQuit,          "void quit();"},
+    { LibPrintf,        (const char *)"void printf(char *,...);" },
+    { LibPrintLog,      (const char *)"void print_log(char *,...);" },
+    { LibPrintErr,      (const char *)"void error_log(char *,...);" },
+    { LibPrintf,        (const char *)"void $display(char *,...);" },
+    { LibSPrintf,       (const char *)"char *sprintf(char *,char *, ...);" },
+    { LibUVMSPrintf,    (const char *)"char *$sformatf(char *,...);" },
+    { LibUVMSPrintf,    (const char *)"char *$psprintf(char *,...);" },
+    { LibGets,          (const char *)"void gets(char *,int);" },
+    { LibGetc,          (const char *)"int getchar();" },
+    { LibExit,          (const char *)"void exit(int);" },
+    { LibQuit,          (const char *)"void quit();"},
 #endif
 #ifdef PICOC_MATH_LIBRARY
-    { LibSin,           "float sin(float);" },
-    { LibCos,           "float cos(float);" },
-    { LibTan,           "float tan(float);" },
-    { LibAsin,          "float asin(float);" },
-    { LibAcos,          "float acos(float);" },
-    { LibAtan,          "float atan(float);" },
-    { LibSinh,          "float sinh(float);" },
-    { LibCosh,          "float cosh(float);" },
-    { LibTanh,          "float tanh(float);" },
-    { LibExp,           "float exp(float);" },
-    { LibFabs,          "float fabs(float);" },
-    { LibLog,           "float log(float);" },
-    { LibLog10,         "float log10(float);" },
-    { LibPow,           "float pow(float,float);" },
-    { LibSqrt,          "float sqrt(float);" },
-    { LibRound,         "float round(float);" },
-    { LibCeil,          "float ceil(float);" },
-    { LibFloor,         "float floor(float);" },
+    { LibSin,           (const char *)"float sin(float);" },
+    { LibCos,           (const char *)"float cos(float);" },
+    { LibTan,           (const char *)"float tan(float);" },
+    { LibAsin,          (const char *)"float asin(float);" },
+    { LibAcos,          (const char *)"float acos(float);" },
+    { LibAtan,          (const char *)"float atan(float);" },
+    { LibSinh,          (const char *)"float sinh(float);" },
+    { LibCosh,          (const char *)"float cosh(float);" },
+    { LibTanh,          (const char *)"float tanh(float);" },
+    { LibExp,           (const char *)"float exp(float);" },
+    { LibFabs,          (const char *)"float fabs(float);" },
+    { LibLog,           (const char *)"float log(float);" },
+    { LibLog10,         (const char *)"float log10(float);" },
+    { LibPow,           (const char *)"float pow(float,float);" },
+    { LibSqrt,          (const char *)"float sqrt(float);" },
+    { LibRound,         (const char *)"float round(float);" },
+    { LibCeil,          (const char *)"float ceil(float);" },
+    { LibFloor,         (const char *)"float floor(float);" },
 #endif
 #ifndef NO_STRING_FUNCTIONS
-    { LibMalloc,        "void *malloc(int);" },
-    { LibFree,          "void free(void *);" },
+    { LibMalloc,        (const char *)"void *malloc(int);" },
+    { LibFree,          (const char *)"void free(void *);" },
 #ifndef NO_CALLOC
-    { LibCalloc,        "void *calloc(int,int);" },
+    { LibCalloc,        (const char *)"void *calloc(int,int);" },
 #endif
 #ifndef NO_REALLOC
-    { LibRealloc,       "void *realloc(void *,int);" },
+    { LibRealloc,       (const char *)"void *realloc(void *,int);" },
 #endif
-    { LibStrcpy,        "void strcpy(char *,char *);" },
-    { LibStrncpy,       "void strncpy(char *,char *,int);" },
-    { LibStrcmp,        "int strcmp(char *,char *);" },
-    { LibStrncmp,       "int strncmp(char *,char *,int);" },
-    { LibStrcat,        "void strcat(char *,char *);" },
-    { LibIndex,         "char *index(char *,int);" },
-    { LibRindex,        "char *rindex(char *,int);" },
-    { LibStrlen,        "int strlen(char *);" },
-    { LibMemset,        "void memset(void *,int,int);" },
-    { LibMemcpy,        "void memcpy(void *,void *,int);" },
-    { LibMemcmp,        "int memcmp(void *,void *,int);" },
+    { LibStrcpy,        (const char *)"void strcpy(char *,char *);" },
+    { LibStrncpy,       (const char *)"void strncpy(char *,char *,int);" },
+    { LibStrcmp,        (const char *)"int strcmp(char *,char *);" },
+    { LibStrncmp,       (const char *)"int strncmp(char *,char *,int);" },
+    { LibStrcat,        (const char *)"void strcat(char *,char *);" },
+    { LibIndex,         (const char *)"char *index(char *,int);" },
+    { LibRindex,        (const char *)"char *rindex(char *,int);" },
+    { LibStrlen,        (const char *)"int strlen(char *);" },
+    { LibMemset,        (const char *)"void memset(void *,int,int);" },
+    { LibMemcpy,        (const char *)"void memcpy(void *,void *,int);" },
+    { LibMemcmp,        (const char *)"int memcmp(void *,void *,int);" },
 #endif
     /* Extensions for UVM */
-    { UVMInfo,          "void `uvm_info(char *,char *,int);" },
-    { UVMError,         "void `uvm_error(char *,char *);" },        //ATT: if same name again - silent crash!
+    { UVMInfo,          (const char *)"void `uvm_info(char *,char *,int);" },
+    { UVMError,         (const char *)"void `uvm_error(char *,char *);" },        //ATT: if same name again - silent crash!
 
     /* extension for ReadMem and WriteMem */
 #if 1
-    { LibHelp,			    "void help();" },
-    { LibPicocRestart,  "void PicocRestart();" },
-    //{ LibReadMem,		"unsigned long ReadMem(unsigned long);" },
-    //{ LibWriteMem,	"void WriteMem(unsigned long,unsigned long);" },
+    { LibHelp,			    (const char *)"void help();" },
+    { LibHelp,			    (const char *)"void CHelp();" },
+    { LibPicocRestart,  (const char *)"void PicocRestart();" },
+    //{ LibReadMem,		(const char *)"unsigned long ReadMem(unsigned long);" },
+    //{ LibWriteMem,	(const char *)"void WriteMem(unsigned long,unsigned long);" },
 
-    //{ CmdReadMem,		"unsigned long PReadMem(unsigned long);" },
-    //{ CmdWriteMem,	"unsigned long PWriteMem(unsigned long,unsigned long);" },
-    { CmdMemWordPrint,	"void PWords(void *,unsigned long);" },
-    { CmdMemShortPrint,	"void PShorts(void *,unsigned long);" },
-    { CmdMemBytePrint,  "void PBytes(void *,unsigned long);" },
+    //{ CmdReadMem,		(const char *)"unsigned long PReadMem(unsigned long);" },
+    //{ CmdWriteMem,	(const char *)"unsigned long PWriteMem(unsigned long,unsigned long);" },
+    { CmdMemWordPrint,	(const char *)"void PWords(void *,unsigned long);" },
+    { CmdMemShortPrint,	(const char *)"void PShorts(void *,unsigned long);" },
+    { CmdMemBytePrint,  (const char *)"void PBytes(void *,unsigned long);" },
 #ifndef SAVE_SPACE		
-    { CmdWriteOMem,		  "void PWriteOMem(unsigned short,unsigned short);" },					//no need: use WriteMem
-    { CmdFillMem,		    "void FillMem(unsigned short,unsigned short,unsigned short);" },		//no need: use memset
-    { CmdCmpMem,		    "int PCmpMem(unsigned short,unsigned short,unsigned short);" },
-    { CmdCpyMem,		    "void MemCpy(unsigned short,unsigned short,unsigned short);" },			//no need: use memcmp
-    { CmdCheckRead,		  "int PCheckRead(unsigned short,unsigned short,unsigned short);" },
-    { CmdCheckWrite,	  "int PCheckWrite(unsigned short,unsigned short,unsigned short);" },
-    { CmdPoll,			    "void Poll(unsigned short,unsigned short,unsigned short);" },
+    { CmdWriteOMem,		  (const char *)"void PWriteOMem(unsigned short,unsigned short);" },					//no need: use WriteMem
+    { CmdFillMem,		    (const char *)"void FillMem(unsigned short,unsigned short,unsigned short);" },		//no need: use memset
+    { CmdCmpMem,		    (const char *)"int PCmpMem(unsigned short,unsigned short,unsigned short);" },
+    { CmdCpyMem,		    (const char *)"void MemCpy(unsigned short,unsigned short,unsigned short);" },			//no need: use memcmp
+    { CmdCheckRead,		  (const char *)"int PCheckRead(unsigned short,unsigned short,unsigned short);" },
+    { CmdCheckWrite,	  (const char *)"int PCheckWrite(unsigned short,unsigned short,unsigned short);" },
+    { CmdPoll,			    (const char *)"void Poll(unsigned short,unsigned short,unsigned short);" },
 #endif
 #ifdef WITH_SCRIPTS
     /* open a script file and process it */
-    { LibOpenScript,	  "int RunScript(char *);" },
-    { LibGetExitVal,	  "int ExitValue();" },
+    { LibOpenScript,	  (const char *)"int RunScript(char *);" },
+    { LibGetExitVal,	  (const char *)"int ExitValue();" },
 #endif
 #if 1
-    { LibMsSleep,       "void mssleep(unsigned long);" },
+    { LibMsSleep,       (const char *)"void mssleep(unsigned long);" },
 #endif
 #if 0
-    { LibExecuteCommand,"int ShellCommand(char *);" },
+    { LibExecuteCommand,(const char *)"int ShellCommand(char *);" },
 #else
-    { LibExecuteCommand,"int ShellCommand(char *,...);" },
+    { LibExecuteCommand,(const char *)"int ShellCommand(char *,...);" },
 #if 0
-    { LibWriteConsec,   "int WriteConsecutive(void *,unsigned long,unsigned long,unsigned long);" },
-    { LibReadConsec,    "int ReadConsecutive(void *,unsigned long,unsigned long,unsigned long);" },
+    { LibWriteConsec,   (const char *)"int WriteConsecutive(void *,unsigned long,unsigned long,unsigned long);" },
+    { LibReadConsec,    (const char *)"int ReadConsecutive(void *,unsigned long,unsigned long,unsigned long);" },
 #endif
 #if 0
-    { LibCpuReadSingle, "unsigned long CPU_READ_SINGLE(unsigned long,int);" },
-    { LibCpuWriteSingle,"void CPU_WRITE_SINGLE(unsigned long,unsigned long,int);" },
+    { LibCpuReadSingle, (const char *)"unsigned long CPU_READ_SINGLE(unsigned long,int);" },
+    { LibCpuWriteSingle,(const char *)"void CPU_WRITE_SINGLE(unsigned long,unsigned long,int);" },
 #endif
 
-    { LibSpiTrans,      "int SpiTransaction(unsigned char *,unsigned char *,int);" },
-    { LibSpiINTfifo,    "unsigned short SpiINTfifo(int,unsigned char *,int);" },
+    { LibSpiTrans,      (const char *)"int SpiTransaction(unsigned char *,unsigned char *,int);" },
+    { LibSpiINTfifo,    (const char *)"unsigned short SpiINTfifo(int,unsigned char *,int);" },
 #if 0
-    { LibI2CRead,       "int I2CRead(unsigned char,unsigned char,unsigned char *,int,int);" },
-    { LibI2CWrite,      "int I2CWrite(unsigned char,unsigned char *,int,int);" },
+    { LibI2CRead,       (const char *)"int I2CRead(unsigned char,unsigned char,unsigned char *,int,int);" },
+    { LibI2CWrite,      (const char *)"int I2CWrite(unsigned char,unsigned char *,int,int);" },
 
-    { LibGetGPIO,       "unsigned long GetGPIO();" },
-    { LibPutGPIO,       "void PutGPIO(unsigned long);" },
+    { LibGetGPIO,       (const char *)"unsigned long GetGPIO();" },
+    { LibPutGPIO,       (const char *)"void PutGPIO(unsigned long);" },
 
-	  { LibSetLED,       	"void SetLED(int,int);" },
+	  { LibSetLED,       	(const char *)"void SetLED(int,int);" },
 #endif
 
-    { LibUDPSend,      "int UDPsend(int port,unsigned char *,unsigned long);" },
+    { LibUDPSend,      (const char *)"int UDPsend(int port,unsigned char *,unsigned long);" },
 
-	  { LibSetINThandler,	      "void SetINTHandler(char *);" },
-    { LibSetINThandler2,      "void SetINTHandler2(char *);" },
-    { LibDefaultINTHandler,   "void DefaultINTHandler(int);" },
+	  { LibSetINThandler,	      (const char *)"void SetINTHandler(char *);" },
+    { LibSetINThandler2,      (const char *)"void SetINTHandler2(char *);" },
+    { LibDefaultINTHandler,   (const char *)"void DefaultINTHandler(int);" },
 
-    { LibMethodSize,    "int size();"},	//use as: variable.size() - returns number of elements for arrays
+    { LibMethodSize,    (const char *)"int size();"},	//use as: variable.size() - returns number of elements for arrays
 
 #endif
 

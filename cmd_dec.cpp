@@ -729,7 +729,7 @@ void f(const char *str) {
 #define RSTR(str) ({static const char data[]         = (str); &data[0];}) //Regular, on DTCM (RAM1)
 #define DSTR(str) ({static const char data[] DMAMEM  = (str); &data[0];})
 
-ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 {
 	unsigned int idx;
 
@@ -759,7 +759,7 @@ ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
 {
   extern uint32_t MCUCoreFrequency;
 
@@ -774,7 +774,7 @@ ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out)
 {
   unsigned long err;
 
@@ -790,14 +790,14 @@ ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out)
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_debug(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_debug(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
   gCFGparams.DebugFlags = res->val[0];
 
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_print(TCMD_DEC_Results *res, EResultOut out)
 {
 	if (res->str)
 		UART_Send((const char *)res->str, CMD_lineLen(res->str, res->ctl), out);
@@ -825,7 +825,7 @@ ECMD_DEC_Status CMD_delay(TCMD_DEC_Results *res, EResultOut out)
 }
 
 #ifdef WITH_SDCARD
-ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
   if (res->val[0])
     SDCARD_setup(out);
   else
@@ -834,27 +834,27 @@ ECMD_DEC_Status CMD_sdinit(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_sddir(TCMD_DEC_Results* res, EResultOut out) {
   SDCARD_printDirectory("/", 0, out);
 
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results* res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_sdprint(TCMD_DEC_Results* res, EResultOut out)
 {
 	SDCARD_PrintFile(res->str, out);
 
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_sdexec(TCMD_DEC_Results* res, EResultOut out)
 {
 	SDCARD_Exec(res, out);
 
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_sdformat(TCMD_DEC_Results* res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_sdformat(TCMD_DEC_Results* res, EResultOut out)
 {
 	(void)res;
 	////SDCARD_Format(out);
@@ -1086,7 +1086,7 @@ ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out) {
   int spiclk;
   if (res->val[0]) {
     SPI_setClock((int)res->val[0]);
@@ -1098,7 +1098,7 @@ ECMD_DEC_Status CMD_spiclk(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   if (res->opt) {
     if (strncmp(res->opt, "-d", 2) == 0) {
       CFG_SetDefault();
@@ -1115,7 +1115,7 @@ ECMD_DEC_Status CMD_syscfg(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out) {
   (void)out;
 
   CFG_Set(res->val[0], res->val[1]);
@@ -1123,7 +1123,7 @@ ECMD_DEC_Status CMD_setcfg(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
   int dev = 0;
 
   if (res->opt) {
@@ -1139,7 +1139,7 @@ ECMD_DEC_Status CMD_pstat(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_cstat(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_cstat(TCMD_DEC_Results* res, EResultOut out) {
   int dev = 0;
 
   if (res->opt) {
@@ -1152,7 +1152,7 @@ ECMD_DEC_Status CMD_cstat(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
   extern uint32_t HTTPD_GetIPAddress(void);
   uint32_t ipAddr;
 
@@ -1163,7 +1163,7 @@ ECMD_DEC_Status CMD_ipaddr(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 {
   if (res->opt) {
     if (strncmp(res->opt, "-i", 2) == 0) {
@@ -1183,7 +1183,7 @@ ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
   if (pico_c_isRunning()) {
     int strLen = (int)strlen(res->str);
     res->ctl = 1;             //break entire command line, take as one line
@@ -1193,14 +1193,14 @@ ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_udptest(TCMD_DEC_Results *res, EResultOut out)
 {
 	UDP_test();
 
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out)
 {
 	(void)out;
 	unsigned long ip[4] = {0, 0, 0, 0};
@@ -1262,7 +1262,7 @@ ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out)
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
   (void)res;
   (void)out;
 
@@ -1272,7 +1272,7 @@ ECMD_DEC_Status CMD_fwreset(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
 
   GPIO_config(res->val[0], res->val[1]);
@@ -1280,7 +1280,7 @@ ECMD_DEC_Status CMD_cgpio(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
 
   GPIO_putPins(res->val[0]);
@@ -1288,7 +1288,7 @@ ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
   unsigned long val;
 
   val = GPIOgetPins();
@@ -1297,7 +1297,7 @@ ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
 
   GPIO_resetPin(res->val[0]);
@@ -1375,10 +1375,18 @@ ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out) {
 #endif
 
 /* other test, debug commands */
-ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
+int itcmVar FASTRUN;
+
+FLASHMEM ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
 
+#if 0
   GPIO_testSpeed();
-
+#else
+  int i;
+  for (i = 0; i < 10; i++)
+    itcmVar += i;
+  print_log(UART_OUT, "XX: %d\r\n", itcmVar);
+#endif
   return CMD_DEC_OK;
 }

@@ -32,7 +32,7 @@ uint32_t set_arm_clock(uint32_t frequency);
 
 uint32_t MCUCoreFrequency = 600000000;
 
-void setup(void) {
+FLASHMEM void setup(void) {
     /* overclocking:
      * ATTENTION:
      * 1. beyond 600 MHz GPIO signals do not reach anymore 3V3 level, the faster the lower the peak amplitude!
@@ -74,6 +74,6 @@ void setup(void) {
     ::vTaskStartScheduler();
 }
 
-void loop() {
+FLASHMEM void loop() {
   /* this is empty now and never called again because of using FreeRTOS */
 }

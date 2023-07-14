@@ -31,7 +31,7 @@ void CMD_thread(void *pvParameters) {
   }
 }
 
-void CMD_setup(void) {
+FLASHMEM void CMD_setup(void) {
   //wait for host terminal connected
   while ( ! Serial) {
     delay(10);

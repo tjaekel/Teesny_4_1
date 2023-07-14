@@ -84,7 +84,7 @@ static void teensyMAC(uint8_t *mac)
 extern void tftp_thread(void *pvParameters);
 /*const*/ tftp_context tftp_ctx = { tftp_fs_open, tftp_fs_close, tftp_fs_read, tftp_fs_write };
 
-void TFTP_setup(EResultOut out) {
+FLASHMEM void TFTP_setup(EResultOut out) {
 #if 0
   if (!SD.begin(BUILTIN_SDCARD)) {
     UART_printString("*E: SD card failed\r\n", out);

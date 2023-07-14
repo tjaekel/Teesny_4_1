@@ -40,7 +40,7 @@ void UDP_thread(void *pvParameters) {
   }
 }
 
-void UDP_setup(void) {
+FLASHMEM void UDP_setup(void) {
   /* nothing to do QNEthernet, TFTP, already up and running */
   /* just create a thread and we do UDP send in background */
   xSemaphore = xSemaphoreCreateBinary();
@@ -67,15 +67,16 @@ int UDP_send(int port, uint8_t *pout, size_t n) {
   return r;
 }
 
-void UDP_setHostIP(unsigned long ipAddr) {
+FLASHMEM void UDP_setHostIP(unsigned long ipAddr) {
   //ipAddr is BIG ENDIAN!
-  udpHost = (uint8_t *)&ipAddr;
+  ////udpHost = (uint8_t *)&ipAddr;
+  udpHost = (IPAddress)ipAddr;
 }
 
 //data for UDP_test:
 static uint8_t d[10] = {1,2,3,4,5,6,7,8,9,10};
 
-void UDP_test(void) {
+FLASHMEM void UDP_test(void) {
   bool r;
   r = UDP_send(8080, d, sizeof(d));
   if (r)
