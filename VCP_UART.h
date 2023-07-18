@@ -9,8 +9,8 @@
 //	#include "WProgram.h"
 //#endif
 
-#define XPRINT_LEN			(80*64)			/* max. length print buffer/strings/lines */
-#define HTTPD_PRINT_LEN (4*1024)    /* max. length print for HTTP */
+#define XPRINT_LEN			(80*128)			/* max. length print buffer/strings/lines */
+#define HTTPD_PRINT_LEN (4*1024)      /* max. length print for HTTP */
 
 typedef enum {
 	UART_OUT,

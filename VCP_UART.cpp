@@ -1,13 +1,14 @@
 
 #include "VCP_UART.h"
-#include "arduino_freertos.h"
-#include "avr/pgmspace.h"
+#include "cmd_dec.h"
+#include <arduino_freertos.h>
+#include <avr/pgmspace.h>
 
 /* TODO:
  * ad a semaphore/mutex around Serial.print
  */
 
-static char UARTbuffer[80];
+static char UARTbuffer[LINE_BUFFER_LEN];
 static size_t numAvail = 0;
 
 char XPrintBuf[XPRINT_LEN];

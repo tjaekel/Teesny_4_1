@@ -1,18 +1,17 @@
 #ifndef SYS_CONFIG_H__
 #define SYS_CONFIG_H__
 
-////using namespace std;
-
 /* define system macros, stack size etc. */
-#define VERSION_NUMBER  "V1.4"
+#define VERSION_NUMBER  "V1.5"
 #define VERSION_STRING  "\r\n---- Teensy FW: " VERSION_NUMBER " ----"
 
 /* thread definitions */
-#define THREAD_STACK_SIZE_CMD         (2*1024)
-#define THREAD_STACK_SIZE_GPIO        (2*1024)
-#define THREAD_STACK_SIZE_HTTPD       (1*1024)
-#define THREAD_STACK_SIZE_TFTP        (1*1024)
-#define THREAD_STACK_SIZE_UDP         (1*1024)
+/* stack size is in number of words, not bytes? */
+#define THREAD_STACK_SIZE_CMD         ((2*1024) / 1)
+#define THREAD_STACK_SIZE_GPIO        ((2*1024) / 1)
+#define THREAD_STACK_SIZE_HTTPD       ((1*1024) / 1)
+#define THREAD_STACK_SIZE_TFTP        ((1*1024) / 1)
+#define THREAD_STACK_SIZE_UDP         ((1*1024) / 1)
 
 #define THREAD_PRIO_CMD               1
 #define THREAD_PRIO_GPIO              3

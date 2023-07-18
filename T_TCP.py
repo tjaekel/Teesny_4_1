@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-#Python network access to P7SPIder MCU via TCP/IP
+#Python network access to P7SPIder or TeensySPIder MCU via TCP/IP
 
 import socket
 import time
@@ -13,8 +13,9 @@ if defaultHostName != None :
     defaultHostIPaddress = "0.0.0.0"
 else :
     #MCU IP address, use "ipaddr" command on UART
-    ##defaultHostIPaddress = "10.59.144.26"       #default STATIC
-    defaultHostIPaddress = "192.168.0.84"    #my DHCP I get
+    ##defaultHostIPaddress = "10.59.144.26"     #default STATIC
+    ##defaultHostIPaddress = "192.168.0.84"     #my DHCP I get
+    defaultHostIPaddress = "192.168.1.169"      #MCU STATIC IP address
 
 ##TCPport = 80                #the port for commands, web browser HTTP request port
 TCPport = 8080
@@ -58,8 +59,7 @@ class NetworkInterface() :
 
     def TextCommand(self, cmd) :
         """ATTENTION: this TextCommand() supports only up to 1460 ASCII characters total,
-           including the string GET /C !
-           for longer ASCII commands - use TextCommandLarge()
+           for longer ASCII commands - use TextCommandBinary()
            This command sends like regular HTTP request, with a "GET /..." ASCII string
            ATTENTION: the socket is closed after one request!
         """
@@ -100,8 +100,52 @@ class NetworkInterface() :
         #close connection as web browser would do
         self.ConnectClose()
 
+    def TextCommand2(self, cmd) :
+        """ATTENTION: this TextCommand() supports only up to 1460 ASCII characters total,
+           including the string GET /C !
+           for longer ASCII commands - use TextCommandBinary()
+           This command sends like regular HTTP request, with a "GET /C..." ASCII string
+           ATTENTION: the socket is closed after one request!
+        """
+        global maxTCPLen
+        #ATT: we need 2x NEWLINE at the end! Web Server expects it as end_of_request
+
+        #encode as URL:
+        #we have to encode space and other characters as an URL!
+        ##cmd = urllib.parse.quote(cmd)
+
+        message = 'GET /C' + cmd
+        ##print("\nLen message: %d" % (len(message)))
+        ##self.ConnectClose()
+        self.ConnectOpen()
+
+        self.sock.sendall(message.encode())
+        ##print(message)
+        ##print("\nLen receive: %d" % (maxTCPLen))
+        data = self.sock.recv(maxTCPLen)
+        while True : 
+            if b"\003" in data :
+                ##print("BREAK")
+                break
+            ##print("next...")
+            data = data + self.sock.recv(maxTCPLen)
+
+        ##print("\nLen response: %d" % (len(data)))
+        ##print(data)
+        data = data.decode()
+                 
+        #print response for the command
+
+        ##we get the reponse with a HTML header: strip it off:
+        ##data = self.stripOfHeader(data)
+
+        print(data)
+
+        #close connection as web browser would do
+        self.ConnectClose()
+
     def TextCommandBinary(self, cmd) :
-        """TextCommandLarge() send an ASCII command via BINARY: CMD 0x01 plus LEN as 3 bytes
+        """TextCommandBinary() send an ASCII command via BINARY: CMD 0x01 plus LEN... as 3 bytes
            where LEN is the total length of following in binary, as LITTLE_ENDIAN
            This supports a much longer single line command string, up to max. TCP packet length - overhead.
            REMARK: the socket remains open after this request
@@ -141,13 +185,46 @@ class NetworkInterface() :
         #let the connection open
         #self.ConnectClose()
 
+    def TextCommandBinary2(self, cmd) :
+        """TextCommandLarge() send an ASCII command via BINARY: "GET /c plus LEN... 
+           where LEN is the total length of following in binary, as BIG_ENDIAN, two bytes
+           This supports a much longer single line command string, up to max. TCP packet length - overhead.
+           REMARK: the socket remains open after this request
+        """
+        global maxTCPLen
+        lenCmd  = len(cmd)          #without NL at the end
+        #code for BINARY command (with LEN, but as ASCII text)
+        message = bytearray(lenCmd + 8)
+        message[0] = ord('G')
+        message[1] = ord('E')
+        message[2] = ord('T')
+        message[3] = ord(' ')
+        message[4] = ord('/')
+        message[5] = ord('c')
+        message[6] = (lenCmd >>  8) & 0xFF  #BIG ENDIAN
+        message[7] = (lenCmd >>  0) & 0xFf
+        for i in range(lenCmd) :
+            message[8 + i] = ord(cmd[i])
+
+        #print(repr(message))
+
+        self.ConnectOpen()      #open if not still open
+
+        self.sock.sendall(message)
+        data = self.sock.recv(maxTCPLen)
+                 
+        print(data[0:].decode())
+
+        #let the connection open
+        #self.ConnectClose()
+
     def CommandShell(self) :
-        """interactive, like TELNET, shell command, using the ASCII version (with "GET /...") for commands
-           ATTENTION: the socket is closed after the request
+        """interactive, like TELNET, shell command, using the implementations for commands
+           quit the loop with single character q typed
         """
         cmd = ""
 
-        ##self.ConnectOpen()    #we do anyway in TextCmmandBinary
+        ##self.ConnectOpen()    #we do anyway in TextCmmandBinary etc.
         while cmd != 'q':
             cmd = input("-> ")
             if cmd == 'q':
@@ -155,8 +232,11 @@ class NetworkInterface() :
 
             ##print(cmd)
             #use TEXT vs. BINARY command (a binary packet with ASCII command text)
-            self.TextCommand(cmd)
+
+            ##self.TextCommand(cmd)
+            ##self.TextCommand2(cmd)
             ##self.TextCommandBinary(cmd)
+            self.TextCommandBinary2(cmd)
 
         #close the connection when done
         self.ConnectClose()
@@ -768,7 +848,7 @@ def Main() :
 
     ##maxTCPLen = (64*1024 + 16)
     b = bytearray(maxTCPLen)
-    #this is ReadChipID - not working on FERMAT-2
+    #this is ReadChipID - not working on CHIP-2
     for i in range(maxTCPLen // 4):
         b[0 + i*4] = 0x02
         b[1 + i*4] = 0xE0
@@ -870,7 +950,7 @@ def Main() :
 
     if 0 :
         #write register <addr> <value ...> (number of list elements)
-        mcuNet.Chip_WREG(0x0002, [1, 2, 3, 4,5, 6, 7])
+        mcuNet.Chip_WREG(0x0002, [1, 2, 3, 4,5,CHIP-2 6, 7])
 
     if 0 :
         #write RAM (block memory) <addr> <value ...> (number of list elements)

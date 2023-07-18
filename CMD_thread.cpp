@@ -32,11 +32,13 @@ void CMD_thread(void *pvParameters) {
 }
 
 FLASHMEM void CMD_setup(void) {
+#if 0
   //wait for host terminal connected
   while ( ! Serial) {
     delay(10);
   }
-            
+#endif
+           
   ::xTaskCreate(CMD_thread, "CMD_thread", THREAD_STACK_SIZE_CMD, nullptr, THREAD_PRIO_CMD, nullptr);
 }
 

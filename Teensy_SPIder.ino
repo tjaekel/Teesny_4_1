@@ -77,3 +77,7 @@ FLASHMEM void setup(void) {
 FLASHMEM void loop() {
   /* this is empty now and never called again because of using FreeRTOS */
 }
+
+void PrintRAMUsage(void) {
+  freertos::print_ram_usage();
+}

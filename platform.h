@@ -8,7 +8,7 @@
 #ifndef PLATFORM_H_
 #define PLATFORM_H_
 
-#define LARGE_INT_POWER_OF_TEN		10000	/* the largest power of ten which fits in an int on this architecture */
+#define LARGE_INT_POWER_OF_TEN		10000	    /* the largest power of ten which fits in an int on this architecture */
 #define ALIGN_TYPE void *                   /* the data type to use for alignment */
 
 #define GLOBAL_TABLE_SIZE            20     /* global variable table */
@@ -19,7 +19,7 @@
 #define LOCAL_TABLE_SIZE			       20     /* size of local variable table (can expand) */
 #define STRUCT_TABLE_SIZE			       20 	  /* size of struct/union member table (can expand) */
 
-#define INTERACTIVE_PROMPT_STATEMENT	"\r\n: "  //XXXX modified
+#define INTERACTIVE_PROMPT_STATEMENT	"\r\n: "
 ////#define INTERACTIVE_PROMPT_LINE			": "
 
 #define PlatformSetExitPoint() setjmp(ExitBuf)
@@ -39,10 +39,10 @@
 
 // # include <stdio.h>				/* fflush, stdout, fgets, stdin, getchar, putchar */
 #include "printf.h"
-#include <stdlib.h>				/* malloc, free, exit, calloc, realloc */
-#include <ctype.h>					/* isalnum, isspace, isalpha, isdigit */
-#include <string.h>				/* memcpy, strlen, memset, strcpy, strncmp, strncpy */
-#include <assert.h>				/* assert */
+#include <stdlib.h>				    /* malloc, free, exit, calloc, realloc */
+#include <ctype.h>					  /* isalnum, isspace, isalpha, isdigit */
+#include <string.h>				    /* memcpy, strlen, memset, strcpy, strncmp, strncpy */
+#include <assert.h>				    /* assert */
 //# include <sys/types.h>			/* not really needed */
 
 #ifndef WITHOUT_SYSSTAT_H
@@ -50,9 +50,9 @@
 #endif
 
 //# include <unistd.h>				/* not found, not needed */
-#include <stdarg.h>				/* needed for va_start, va_end, va_arg */
-#include <setjmp.h>				/* jump_buf, set_jmp, longjmp */
-#ifndef NO_FP						/* with or without Floating Point */
+#include <stdarg.h>				    /* needed for va_start, va_end, va_arg */
+#include <setjmp.h>				    /* jump_buf, set_jmp, longjmp */
+#ifndef NO_FP						      /* with or without Floating Point */
 /* defines for the optional "fdlibm" maths library */
 #define _IEEE_LIBM
 #include <math.h>

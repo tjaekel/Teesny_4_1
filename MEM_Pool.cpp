@@ -5,11 +5,11 @@
 #include "VCP_UART.h"
 #include "SYS_error.h"
 
-unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE] DMAMEM;
+static unsigned long GMEMPool[MEM_POOL_NUM_SEGMENTS * MEM_POOL_SEG_SIZE] DMAMEM; /* 32bit aligned */
 static int MEMPool_mgt[MEM_POOL_NUM_SEGMENTS] DMAMEM;
 
-int MEMPool_inUse = 0;
-int MEMPool_Watermark = 0;
+static int MEMPool_inUse = 0;
+static int MEMPool_Watermark = 0;
 
 FLASHMEM void MEM_PoolInit(void) {
   memset(MEMPool_mgt, 0, sizeof(MEMPool_mgt));

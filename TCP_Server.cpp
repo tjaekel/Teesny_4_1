@@ -31,7 +31,7 @@ constexpr uint32_t kDHCPTimeout = 5000;  // 5 seconds
 // instead rely on the listener to inform us of a link.
 constexpr uint32_t kLinkTimeout = 5000;  // 5 seconds
 
-constexpr uint16_t kServerPort = 80;
+constexpr uint16_t kServerPort = 8080;    //our HTTP port is 8080
 
 // Timeout for waiting for input from the client.
 constexpr uint32_t kClientTimeout = 5000;  // 5 seconds
@@ -98,12 +98,6 @@ static void TCP_Server_thread(void *pvParameters);
 void tellServer(bool hasIP, bool linkState);
 
 FLASHMEM void TCP_Server_setup(void) {
-#if 0
-  Serial.begin(115200);
-  while (!Serial && millis() < 4000) {
-    // Wait for Serial
-  }
-#endif
   if (gCFGparams.DebugFlags & DBG_NETWORK)
     print_log(UART_OUT, "\r\nNetwork starting...\r\n");
 
@@ -298,6 +292,7 @@ void processClientData(ClientState &state) {
   // Loop over available data until an empty line or no more data
   // Note that if emptyLine starts as false then this will ignore any
   // initial blank line.
+  int dontClose = 0;
   int avail = state.client.available();
   if (avail <= 0) {
     return;
@@ -322,7 +317,9 @@ void processClientData(ClientState &state) {
   //print_log(UART_OUT, "Sending to client: %u.%u.%u.%u\r\n", ip[0], ip[1], ip[2], ip[3]);
 
   {
-    char *s;
+    char *s, *s2;
+    int notHTTP = 0;
+
     //place NUL after command string (strip of "HTML")
     s = strstr((char *)rxBuf, " HTTP");
     if (s)
@@ -337,12 +334,44 @@ void processClientData(ClientState &state) {
       CMD_DEC_execute(s, HTTPD_OUT);
     }
     else {
-      //we might have "GET/anyCommand"
+      s2 = NULL;
+      //we might have "GET /anyCommand", "GET /Ccmd" or "GET /cLENcmd"
       s = strstr((char *)rxBuf, "GET /");
       if (s) {
-        s += 5;
-        convertURL(s);
-        CMD_DEC_execute(s, HTTPD_OUT);
+        s2 = strstr((char *)rxBuf, "GET /C");
+        if (s2) {
+          /* old ASCII command */
+          s2 += 6;
+          convertURL(s2);
+          CMD_DEC_execute(s2, HTTPD_OUT);
+          HTTP_PutEOT();
+          notHTTP = 1;
+        }
+        if ( ! s2) {
+          s2 = strstr((char *)rxBuf, "GET /c");
+          if (s2) {
+            /* binary length, BIG ENDIAN, two bytes */
+            s2 += 8;      //skip the length field
+            convertURL(s2);
+            CMD_DEC_execute(s2, HTTPD_OUT);
+            ////HTTP_PutEOT();
+            dontClose = 1;
+            notHTTP = 1;
+          }
+        }
+
+        if ( !s2) {
+          /* for web browser: URL/cmd */
+          s += 5;
+          convertURL(s);
+          CMD_DEC_execute(s, HTTPD_OUT);
+        }
+      }
+      else {
+        //without "GET /"
+        CMD_DEC_execute((char *)rxBuf, HTTPD_OUT);
+        HTTP_PutEOT();
+        notHTTP = 1;
       }
     }
 
@@ -350,16 +379,25 @@ void processClientData(ClientState &state) {
       int l;
       char *b;
       l = HTTP_GetOut(&b);
-      state.client.writeFully(data_html_a);
+      if ( ! notHTTP)
+        state.client.writeFully(data_html_a);
       if (l) {
         state.client.writeFully(b);
       }
+      else {
+        /* in case nothing after command, send EOT */
+        state.client.writeFully("\003");
+      }
       HTTP_ClearOut();
-      state.client.writeFully(data_html_b);
+      if ( ! notHTTP)
+        state.client.writeFully(data_html_b);
     }
   }
 
   state.client.flush();
+
+  if (dontClose)
+    return;
 
   // Half close the connection, per
   // [Tear-down](https://datatracker.ietf.org/doc/html/rfc7230#section-6.6)
@@ -390,7 +428,7 @@ static void TCP_Server_thread(void *pvParameters) {
     // Process data from each client
     for (ClientState &state : clients) {  // Use a reference so we don't copy
       vTaskDelay(1);
-      if (!state.client.connected()) {
+      if ( ! state.client.connected()) {
         state.closed = true;
         continue;
       }

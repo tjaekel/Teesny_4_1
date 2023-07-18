@@ -22,6 +22,8 @@
 #include "CHIP_spi_cmd.h"
 
 /* prototypes */
+ECMD_DEC_Status CMD_NotImplemented(TCMD_DEC_Results *res, EResultOut out);
+
 ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out);
 ECMD_DEC_Status CMD_syserr(TCMD_DEC_Results *res, EResultOut out);
@@ -86,6 +88,7 @@ ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out);
 /* other expert commands */
 ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out);
 
+/* demo. how to use strings on other memories */
 //const char chelp[] FASTRUN = "help";    //DMAMEM fails! - cannot find command, reason: (NOLOAD)
 //const char hhelp[] FASTRUN = "list of all defined commands or help for [cmd]";
 
@@ -93,13 +96,13 @@ const TCMD_DEC_Command Commands[] /*FASTRUN*/ = {
 		{
 				.cmd = (const char *)"help",
 				.help = (const char *)"list of all defined commands or help for [cmd]",
-        //.cmd = chelp,
+        //.cmd = chelp,           /* demo */
         //.help = hhelp,
 				.func = CMD_help
 		},
     {
 				.cmd = (const char *)"sysinfo",
-				.help = (const char *)"display version and systrem info",
+				.help = (const char *)"display version and system info [-m]",
 				.func = CMD_sysinfo
 		},
     {
@@ -257,7 +260,17 @@ const TCMD_DEC_Command Commands[] /*FASTRUN*/ = {
 				.help = (const char*)"set RESET pin <0|1>",
 				.func = CMD_res
 		},
+    {
+				.cmd = (const char*)"pyaccel",
+				.help = (const char*)"not implemented",
+				.func = CMD_NotImplemented
+		},
     /* chip specific SPI cpommands */
+    {
+				.cmd = (const char*)"",
+				.help = (const char*)"---- Chip Specific ----",
+				.func = NULL
+		},
     {
 				.cmd = (const char*)"cid",
 				.help = (const char*)"read ChipID [-P|-A]",
@@ -347,6 +360,10 @@ const TCMD_DEC_Command Commands[] /*FASTRUN*/ = {
 				.func = CMD_test
 		},
 };
+
+/**
+ * ----------------------------------------------------------------------------
+ */
 
 static unsigned int CMD_DEC_findCmd(const char *cmd, unsigned int len)
 {
@@ -720,6 +737,29 @@ int CMD_getSPIoption(char *str)
  * ----------------------------------------------------------------------------
  */
 
+/* mapping for needed functions */
+void UART_Send(const char* str, int chrs, EResultOut out) {
+  while (chrs--) {
+    UART_printChar(*str++, out);
+  }
+}
+
+void UART_SendStr(const char* str, EResultOut out) {
+  UART_printString(str, out);
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ */
+
+FLASHMEM ECMD_DEC_Status CMD_NotImplemented(TCMD_DEC_Results *res, EResultOut out) {
+  (void)res;
+  print_log(out, "*I: not implemented\r\n");
+
+  return CMD_DEC_OK;
+}
+
+#ifdef TRY
 void f(const char *str) {
   Serial.printf("XX: %lx\r\n", (unsigned long)str);
   Serial.printf("YY: %s\r\n", str);   //FAILS, when str is on DMAMEM!
@@ -728,14 +768,17 @@ void f(const char *str) {
 #define FSTR(str) ({static const char data[] FASTRUN = (str); &data[0];})
 #define RSTR(str) ({static const char data[]         = (str); &data[0];}) //Regular, on DTCM (RAM1)
 #define DSTR(str) ({static const char data[] DMAMEM  = (str); &data[0];})
+#endif
 
 FLASHMEM ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 {
 	unsigned int idx;
 
+#ifdef TRY
   print_log(UART_OUT, "XX: %lx | %lx\r\n", (unsigned long)&Commands, (unsigned long)Commands[0].help);
   f("STRING");
   f("STRING");
+#endif
 
 	if (res->str)
 	{
@@ -762,14 +805,26 @@ FLASHMEM ECMD_DEC_Status CMD_help(TCMD_DEC_Results *res, EResultOut out)
 FLASHMEM ECMD_DEC_Status CMD_sysinfo(TCMD_DEC_Results *res, EResultOut out)
 {
   extern uint32_t MCUCoreFrequency;
+  extern void PrintRAMUsage(void);
+  extern float tempmonGetTemp(void);
 
   int inUse, watermark, max;
+  float temp;
+
   print_log(out, "FW version   : %s\r\n", VERSION_NUMBER);
   MEM_PoolCounters(&inUse, &watermark, &max);
   print_log(out, "MEMPool      : %d | %d | %d\r\n", inUse, watermark, max);
   print_log(out, "HTTP clients : %d\r\n", HTTPD_GetClientNumber());
   print_log(out, "ETH link     : %d\r\n", HTTPD_GetETHLinkState());
   print_log(out, "MCU clock    : %ld\r\n", MCUCoreFrequency);
+
+  temp = tempmonGetTemp();
+  print_log(out, "MCU temp.    : %f\r\n", temp);
+  
+  if (res->opt) {
+    if (strncmp(res->opt, "-m", 2) == 0)
+      PrintRAMUsage();
+  }
 
   return CMD_DEC_OK;
 }
@@ -910,18 +965,7 @@ ECMD_DEC_Status CMD_i2cclk (TCMD_DEC_Results* res, EResultOut out)
 }
 #endif
 
-/* mapping for needed functions */
-void UART_Send(const char* str, int chrs, EResultOut out) {
-  while (chrs--) {
-    UART_printChar(*str++, out);
-  }
-}
-
-void UART_SendStr(const char* str, EResultOut out) {
-  UART_printString(str, out);
-}
-
-ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
   unsigned char *SPIbufTx, *SPIbufRx;
   unsigned long i;
   int dev = 0;
@@ -964,7 +1008,7 @@ ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
   return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
   unsigned char *SPIbufTx, *SPIbufRx;
   unsigned long i;
   int dev = 0;
@@ -1218,7 +1262,7 @@ FLASHMEM ECMD_DEC_Status CMD_udpip(TCMD_DEC_Results *res, EResultOut out)
 	return CMD_DEC_OK;
 }
 
-ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out)
+FLASHMEM ECMD_DEC_Status CMD_repeat(TCMD_DEC_Results *res, EResultOut out)
 {
 	int numRepeat = 1;			//default is 1
 	int endLess = 0;
@@ -1306,87 +1350,99 @@ FLASHMEM ECMD_DEC_Status CMD_res(TCMD_DEC_Results *res, EResultOut out) {
 }
 
 /* chip specific SPI commands */
-ECMD_DEC_Status CMD_cid(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_cid(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_cid(res, out);
 }
 
-ECMD_DEC_Status CMD_rreg(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_rreg(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_rreg(res, out);
 }
 
-ECMD_DEC_Status CMD_wreg(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_wreg(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_wreg(res, out);
 }
 
-ECMD_DEC_Status CMD_peek(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_peek(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_peek(res, out);
 }
 
-ECMD_DEC_Status CMD_poke(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_poke(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_poke(res, out);
 }
 
-ECMD_DEC_Status CMD_sysc(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_sysc(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_sysc(res, out);
 }
 
-ECMD_DEC_Status CMD_concur(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_concur(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_concur(res, out);
 }
 
-ECMD_DEC_Status CMD_rblk(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_rblk(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_rblk(res, out);
 }
 
-ECMD_DEC_Status CMD_wblk(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_wblk(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_wblk(res, out);
 }
 
-ECMD_DEC_Status CMD_noop(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_noop(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_noop(res, out);
 }
 
-ECMD_DEC_Status CMD_tir(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_tir(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_tir(res, out);
 }
 
-ECMD_DEC_Status CMD_pgqset(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_pgqset(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_pgqset(res, out);
 }
 
-ECMD_DEC_Status CMD_pgset(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_pgset(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_pgset(res, out);
 }
 
-ECMD_DEC_Status CMD_pgget(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_pgget(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_pgget(res, out);
 }
 
 
-ECMD_DEC_Status CMD_check(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_check(TCMD_DEC_Results *res, EResultOut out) {
   picoc_decodePRIfifo();
   return CMD_DEC_OK;
 }
 
 #ifdef WITH_SDCARD
-ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out) {
+FLASHMEM ECMD_DEC_Status CMD_sdload(TCMD_DEC_Results *res, EResultOut out) {
   return CHIP_sdload(res, out);
 }
 #endif
 
 /* other test, debug commands */
+#if 0
 int itcmVar FASTRUN;
+#endif
 
-FLASHMEM ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
+#define FSTR(str) ({static const char data[] FASTRUN = (str); &data[0];})
+
+void testCode(void) {
+  print_log(UART_OUT, FSTR("helllo from flash\r\n"));
+}
+
+ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
 
 #if 0
   GPIO_testSpeed();
-#else
+#endif
+#if 0
   int i;
   for (i = 0; i < 10; i++)
     itcmVar += i;
   print_log(UART_OUT, "XX: %d\r\n", itcmVar);
+#endif
+#if 1
+  testCode();  
 #endif
   return CMD_DEC_OK;
 }

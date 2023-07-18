@@ -11,14 +11,12 @@
 #include "define_sys.h"
 #include "VCP_UART.h"
 
-#define CMD_DEC_NUM_VAL		(480 +1)		/* maximum number of value parameters */
-#define LINE_BUFFER_LEN		(CMD_DEC_NUM_VAL * 7 + 16)
+#define CMD_DEC_NUM_VAL		(480 +1)		                  /* maximum number of value parameters */
+#define LINE_BUFFER_LEN		(CMD_DEC_NUM_VAL * 7 + 256)   /* max. input string length: values in hex plus some commands */
 
 #define CMD_DEC_OPT_SIGN	'-'				/* option starts with '-' */
 #define CMD_DEC_SEPARATOR	';'				/* different commands in single line */
 #define CMD_DEC_COMMENT		'#'				/* comment after command - rest of line ignored */
-
-#define XPRINT_LEN			(80*64)			/* max. length print buffer/strings/lines */
 
 ////#define UART_BAUDRATE		6000000			/* 1843200 UART baud rate */
 
