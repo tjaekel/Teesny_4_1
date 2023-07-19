@@ -13,6 +13,7 @@
 #include "VCP_UART.h"
 #include "SPI_dev.h"
 #include "GPIO.h"
+#include "cmd_dec.h"                //for hex_dump()
 
 #ifdef SPI_DMA_MODE
 /* ATT: include just once, only here, not again through SPI_dev.h! */
@@ -59,6 +60,11 @@ int SPI_setClock(int clkspeed) {
 
 #ifdef SPI_DMA_MODE
 int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len) {
+  if (gCFGparams.DebugFlags & DBG_SPI) {
+    print_log(UART_OUT, "*D: SPI Tx:\r\n");
+    hex_dump(tx, len, 1, UART_OUT);
+  }
+
   //place semaphore around it, so we can use in concurrent INT handlers
   if( xSemaphoreTake( xSemaphore, ( TickType_t ) 1000 ) == pdTRUE ) {
     if (num) {
@@ -71,7 +77,10 @@ int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len
 
     xSemaphoreGive( xSemaphore );
 
-    //TODO: SPI debug
+    if (gCFGparams.DebugFlags & DBG_SPI) {
+      print_log(UART_OUT, "*D: SPI Rx:\r\n");
+      hex_dump(rx, len, 1, UART_OUT);
+    }
   }
   else {
     print_log(UART_OUT, "*E: SPI semaphore timeout\r\n");

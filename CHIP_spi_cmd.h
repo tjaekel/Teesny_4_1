@@ -20,6 +20,8 @@ typedef struct {
 	unsigned long chksumRx;
 } TSPIBuffer;
 
+extern void getSPIbuf(unsigned char **tx, unsigned char **rx);
+
 extern ECMD_DEC_Status CHIP_cid(TCMD_DEC_Results *res, EResultOut out);
 extern ECMD_DEC_Status CHIP_rreg(TCMD_DEC_Results *res, EResultOut out);
 extern ECMD_DEC_Status CHIP_wreg(TCMD_DEC_Results *res, EResultOut out);

@@ -25,7 +25,11 @@ void PlatformCleanup(void)
 {
     /* just in case we have used malloc on PlatformReadFile() */
     if (CleanupText != NULL)
+#if 0
         free(CleanupText);
+#else
+    	MEM_PoolFree(CleanupText);
+#endif
 }
 
 /* get a line of interactive input */
@@ -103,15 +107,23 @@ unsigned char *PlatformReadFile(const char *FileName)
 	return scriptBuf;
 #else
   int l;
-	/* use SD Card to read a file with Pico-C statements */
+	/* use SD Card to read a file with Pico-C statements */\
+#if 0
   unsigned char *scriptBuf = (unsigned char *)malloc(SCRIPT_SIZE);
+#else
+  unsigned char *scriptBuf = (unsigned char *)MEM_PoolAlloc(SCRIPT_SIZE);
+#endif
   if (scriptBuf) {
     l = SDCARD_ReadFile(FileName, scriptBuf);
     if (l) {
       scriptBuf[l] = '\0';
       return scriptBuf;
     }
+#if 0
     free(scriptBuf);
+#else
+    MEM_PoolFree(scriptBuf);
+#endif
 	  return NULL;
   }
   return NULL;
@@ -144,7 +156,11 @@ void PlatformScanFile(const char *FileName)
     		CleanupText = NULL;
       }
 
+#if 0
       free(SourceStr);
+#else
+      MEM_PoolFree(SourceStr);
+#endif
     }
 }
 

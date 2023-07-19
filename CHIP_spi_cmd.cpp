@@ -18,6 +18,12 @@ TSPIBuffer SPIbuf = {
 		.chksumRx = 0
 };
 
+/* get the SPI rx and rx buffer, to reuse, instead of MEM_Pool or malloc */
+void getSPIbuf(unsigned char **tx, unsigned char **rx) {
+  *tx = SPIbuf.spiTx;
+  *rx = SPIbuf.spiRx;
+}
+
 void print_SPIbuf(uint8_t *tx, uint8_t *rx, unsigned int bytes, EResultOut out)
 {
 	/* print the Tx and Rx SPI buffers */

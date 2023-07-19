@@ -238,13 +238,16 @@ void tellServer(bool hasIP, bool linkState) {
 }
 
 //HTTP request buffer
-static uint8_t rxBuf[HTTPD_BUF_REQ_SIZE];
+static uint8_t rxBuf[HTTPD_BUF_REQ_SIZE] DMAMEM;
 
 void processClientBinary(ClientState &state, uint8_t *buf, int avail) {
   int len;
   len  = *(buf + 1);
   len |= *(buf + 2) << 8;
   len |= *(buf + 3) << 16;       //get the length, LITTLE ENDIAN
+
+  if (gCFGparams.DebugFlags & DBG_NETWORK)
+    print_log(UART_OUT, "*D: TCP bin length: %d | cmd: %02x\r\n", len, *buf);
 
   switch (*buf) {
     case 0x01 :     //binary command
@@ -299,7 +302,7 @@ void processClientData(ClientState &state) {
   }
 
   state.lastRead = millis();
-  state.client.read(rxBuf, sizeof(rxBuf));        //actually avail is number of bytes
+  state.client.read(rxBuf, sizeof(rxBuf) - 1);        //actually avail is number of bytes
 
   /* check if we have a binary command */
   if (*rxBuf < ' ') {
@@ -310,7 +313,8 @@ void processClientData(ClientState &state) {
   //append a NUL for printf
   *(rxBuf + avail) = '\0';
   if (gCFGparams.DebugFlags & DBG_NETWORK)
-    print_log(UART_OUT, "|%s|\r\n", rxBuf);
+    ////print_log(UART_OUT, "|%s|\r\n", rxBuf);
+    hex_dump(rxBuf, 16, 1, UART_OUT);
 
   //DEBUG:
   //IPAddress ip = state.client.remoteIP();
@@ -350,8 +354,14 @@ void processClientData(ClientState &state) {
         if ( ! s2) {
           s2 = strstr((char *)rxBuf, "GET /c");
           if (s2) {
+            int len;
             /* binary length, BIG ENDIAN, two bytes */
-            s2 += 8;      //skip the length field
+            s2 += 6;
+            len  = (int)*s2++ << 8;
+            len |= (int)*s2++ << 0;
+            if (gCFGparams.DebugFlags & DBG_NETWORK)
+              print_log(UART_OUT, "*D: TCP bin length: %d\r\n", len);
+
             convertURL(s2);
             CMD_DEC_execute(s2, HTTPD_OUT);
             ////HTTP_PutEOT();

@@ -639,7 +639,7 @@ const char * CMD_nextStr(const char *str)
 
 /* other helper functions */
 
-void hex_dump(unsigned char *ptr, int len, int mode, EResultOut out)
+void hex_dump(const unsigned char *ptr, int len, int mode, EResultOut out)
 {
 	int i = 0;
 	int xLen = len;
@@ -975,6 +975,7 @@ FLASHMEM ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
 
   dev = CMD_getSPIoption(res->opt);
 
+#if 0
   SPIbufTx = (unsigned char *)MEM_PoolAlloc(CMD_DEC_NUM_VAL);
   if (SPIbufTx) {
     SPIbufRx = (unsigned char *)MEM_PoolAlloc(CMD_DEC_NUM_VAL);
@@ -986,6 +987,10 @@ FLASHMEM ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
   else {
     return CMD_DEC_OOMEM;
   }
+#else
+  //ATTENTION: this conflicts witht the use of 'concur': do not use concur and spitr together!
+  getSPIbuf(&SPIbufTx, &SPIbufRx);
+#endif
 
   //convert the SPI words to a byte array;
   for (i = 0; i < res->num; i++)
@@ -993,7 +998,6 @@ FLASHMEM ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
 
   SPI_transaction(dev, SPIbufTx, SPIbufRx, res->num);
 
-  ////hex_dump((unsigned char *)SPIbufRx, res->num, 1, out);
   {
     unsigned long i;
     for (i = 0; i < res->num; i++) {
@@ -1002,11 +1006,14 @@ FLASHMEM ECMD_DEC_Status CMD_rawspi(TCMD_DEC_Results* res, EResultOut out) {
     UART_Send((const char *)"\r\n", 2, out);
   }
 
+#if 0
   MEM_PoolFree(SPIbufTx);
   MEM_PoolFree(SPIbufRx);
+#endif
 
   return CMD_DEC_OK;
 }
+
 
 FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
   unsigned char *SPIbufTx, *SPIbufRx;
@@ -1018,6 +1025,7 @@ FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
 
   dev = CMD_getSPIoption(res->opt);
 
+#if 0
   /* we allocate maximum for 32bit words, even used shorter later */
   SPIbufTx = (unsigned char *)MEM_PoolAlloc(4 * CMD_DEC_NUM_VAL);
   if (SPIbufTx) {
@@ -1030,6 +1038,10 @@ FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
   else {
     return CMD_DEC_OOMEM;
   }
+#else
+  //ATTENTION: this conflicts witht the use of 'concur': do not use concur and spitr together!
+  getSPIbuf(&SPIbufTx, &SPIbufRx);
+#endif
 
   /* check word size, endian and generate SPI packet */
   {
@@ -1087,7 +1099,14 @@ FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
 	  }
 
     /* do SPI transaction */
+#if 0
+    //when we have the buffer, e.g. from MEM_Pool on DMAMEM - we need cache maintenance
+    arm_dcache_flush(SPIbufTx, res->num * wordSize);
+#endif
     SPI_transaction(dev, SPIbufTx, SPIbufRx, res->num * wordSize);
+#if 0
+    arm_dcache_delete(SPIbufRx, res->num * wordSize);
+#endif
 
     /* decode results */
     {
@@ -1124,8 +1143,10 @@ FLASHMEM ECMD_DEC_Status CMD_spitr(TCMD_DEC_Results* res, EResultOut out) {
     }
   }
 
+#if 0
   MEM_PoolFree(SPIbufTx);
   MEM_PoolFree(SPIbufRx);
+#endif
 
   return CMD_DEC_OK;
 }

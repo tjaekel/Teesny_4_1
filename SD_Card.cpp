@@ -194,7 +194,7 @@ int SDCARD_fgets(char *p, int len, void *file) {
   return i;
 }
 
-#define FILE_LINE_SIZE  MEM_POOL_SEG_SIZE
+#define FILE_LINE_SIZE  MEM_POOL_SEG_BYTES
 
 ECMD_DEC_Status SDCARD_Exec(TCMD_DEC_Results *res, EResultOut out)
 {

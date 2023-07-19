@@ -8,6 +8,8 @@
 #ifndef PLATFORM_H_
 #define PLATFORM_H_
 
+#include "MEM_Pool.h"
+
 #define LARGE_INT_POWER_OF_TEN		10000	    /* the largest power of ten which fits in an int on this architecture */
 #define ALIGN_TYPE void *                   /* the data type to use for alignment */
 
@@ -26,7 +28,7 @@
 
 ////#define USE_EXTMEM
 
-#define SCRIPT_SIZE_BYTES     (1024 * 8)                                      //size for scripts to load and parse
+#define SCRIPT_SIZE_BYTES     MEM_POOL_SEG_BYTES      //(1024 * 8) size for scripts to load and parse
 
 #ifdef USE_EXTMEM
 #define SDRAM_SIZE_BYTES      ((1024 * 1024 * (8 + 8)) - SCRIPT_SIZE_BYTES)   //check, how much EXTMEM is available!

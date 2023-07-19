@@ -57,7 +57,7 @@ char* UART_GetString(void);
 #define UART_GetString    VCP_UART_getString
 
 void MEM_PoolInit(void);
-void hex_dump(char* ptr, int len, int mode, EResultOut out);
+void hex_dump(const unsigned char* ptr, int len, int mode, EResultOut out);
 
 #ifdef __cplusplus
 extern "C" {
