@@ -10,6 +10,9 @@ int  SDCARD_PrintFile(char *file, EResultOut out);
 int  SDCARD_GetStatus(void);
 int  SDCARD_fgets(char *p, int len, void *file);
 void SDCARD_ShowDir(EResultOut out);
+int  SDCARD_format(void);
+int  SDCARD_delete(const char *fname);
+int  SDCARD_writeFile(const char *fname);
 
 ECMD_DEC_Status SDCARD_Exec(TCMD_DEC_Results *res, EResultOut out);
 

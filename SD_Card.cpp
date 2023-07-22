@@ -284,3 +284,37 @@ ECMD_DEC_Status SDCARD_Exec(TCMD_DEC_Results *res, EResultOut out)
 	else
 		return CMD_DEC_ERROR;
 }
+
+int SDCARD_format(void) {
+  bool res;
+  res = SD.format();
+
+  if (res)
+    return 1;
+  else
+    return 0;
+}
+
+int SDCARD_delete(const char *fname) {
+  bool res;
+  res = SD.remove(fname);
+
+  if (res)
+    return 1;
+  else
+    return 0;
+}
+
+int SDCARD_writeFile(const char *fname) {
+  File MyFile = SD.open(fname, FILE_WRITE_BEGIN);
+
+  if (MyFile) {
+    MyFile.write("this is a test\r\n", 16);
+    MyFile.write("Good bye\r\n", 10);
+
+    MyFile.close();
+
+    return 1;
+  }
+  return 0;
+}

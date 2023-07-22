@@ -49,6 +49,9 @@ IPAddress gateway{192, 168, 0, 1};
 
 static int ETHLinkStatus = 0;
 
+//HTTP request buffer
+static uint8_t rxBuf[HTTPD_BUF_REQ_SIZE] DMAMEM;
+
 // --------------------------------------------------------------------------
 //  Types
 // --------------------------------------------------------------------------
@@ -236,9 +239,6 @@ void tellServer(bool hasIP, bool linkState) {
     }
   }
 }
-
-//HTTP request buffer
-static uint8_t rxBuf[HTTPD_BUF_REQ_SIZE] DMAMEM;
 
 void processClientBinary(ClientState &state, uint8_t *buf, int avail) {
   int len;

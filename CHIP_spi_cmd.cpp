@@ -477,8 +477,10 @@ ECMD_DEC_Status CHIP_peek(TCMD_DEC_Results *res, EResultOut out)
 
 		print_log(out, (const char *)"0x%04x ", (int)val);
 
+#if 0
 		/* fill the res->val[] with the read values - we need 'rreg' also for other purposes, e.g. 'preg' */
 		res->val[i] = (unsigned long)val;
+#endif
 	}
 	UART_Send((const char *)"\r\n", 2, out);
 

@@ -12,7 +12,7 @@
 #include "VCP_UART.h"
 
 #define CMD_DEC_NUM_VAL		(480 +1)		                  /* maximum number of value parameters */
-#define LINE_BUFFER_LEN		(CMD_DEC_NUM_VAL * 7 + 256)   /* max. input string length: values in hex plus some commands */
+#define LINE_BUFFER_LEN		4096                          /* (CMD_DEC_NUM_VAL * 7 + 256) - max. input string length: values in hex plus some commands */
 
 #define CMD_DEC_OPT_SIGN	'-'				/* option starts with '-' */
 #define CMD_DEC_SEPARATOR	';'				/* different commands in single line */
