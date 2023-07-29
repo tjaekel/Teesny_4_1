@@ -16,15 +16,18 @@ char HTTPDPrintBuf[HTTPD_PRINT_LEN];
 
 static int HTTPDOutIdx = 0;
 
+static char lastUARTStr[LINE_BUFFER_LEN] = "";
+
 FLASHMEM void VCP_UART_setup(void)
 {
 	////Serial.begin(1843200);                        //baudrate does not matter: VCP UART via USB
 }
 
-char* VCP_UART_getString(void)
+FLASHMEM char* VCP_UART_getString(void)
 {
     int incomingByte;
     static int available = 0;
+    static int ignoreNext = 0;
 
     if ( ! available)
       available = Serial.available();
@@ -33,6 +36,33 @@ char* VCP_UART_getString(void)
         incomingByte = Serial.read();
         available--;
         
+        if (ignoreNext) {
+          ignoreNext--;
+          if (ignoreNext == 0) {
+            if (incomingByte == 'A')
+            {
+              //arrow up
+              if (numAvail == 0) {
+                //do just on empty command line - otherwise we had to remove all first
+                numAvail = strlen(lastUARTStr);
+                VCP_UART_putString(lastUARTStr);
+                strcpy(UARTbuffer, lastUARTStr);
+              }
+              return NULL;
+            }
+            if (incomingByte == 'B') {
+              //arrow down
+            }
+          }
+          return NULL;
+        }
+
+        if (incomingByte == 0x1B) {
+          //ESC [ A, or ESC [ B
+          ignoreNext = 2;
+          return NULL;
+        }
+
         if (incomingByte == 0x08) {
             if (numAvail) {
                 Serial.write(0x08);
@@ -50,6 +80,9 @@ char* VCP_UART_getString(void)
                 Serial.write('\n');
             }
             UARTbuffer[numAvail] = '\0';
+            if (numAvail)
+              //keep a real input, not an empty line
+              strcpy(lastUARTStr, UARTbuffer);
             numAvail = 0;
             return UARTbuffer;
         }
@@ -66,6 +99,7 @@ char* VCP_UART_getString(void)
 
             Serial.write('\r');
             Serial.write('\n');
+            strcpy(lastUARTStr, UARTbuffer);
             return UARTbuffer;
         }
     }

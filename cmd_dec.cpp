@@ -941,18 +941,24 @@ FLASHMEM ECMD_DEC_Status CMD_sddel(TCMD_DEC_Results* res, EResultOut out)
 
 FLASHMEM ECMD_DEC_Status CMD_sdwrite(TCMD_DEC_Results* res, EResultOut out)
 {
-  char *multiLineBuf;
+  char *multiLineBuf, *fname;
   char *uartBuf;
   unsigned int bufIdx;
 	int stop;
   int l;
 
   if (res->str) {
+    fname = (char *)MEM_PoolAlloc(MEM_POOL_SEG_BYTES);
     multiLineBuf = (char *)MEM_PoolAlloc(MEM_POOL_SEG_BYTES);
 
-    if ( ! multiLineBuf)
-			 return CMD_DEC_OOMEM;
+    if ( ! fname)
+      return CMD_DEC_OOMEM;
+    if ( ! multiLineBuf) {
+      MEM_PoolFree(fname);
+			return CMD_DEC_OOMEM;
+    }
 
+    strcpy(fname, res->str);
     bufIdx = 0;
 		stop = 0;
 
@@ -966,7 +972,7 @@ FLASHMEM ECMD_DEC_Status CMD_sdwrite(TCMD_DEC_Results* res, EResultOut out)
       /* ATT: string is without NL, CR! */
 
       l = strlen(uartBuf);
-      print_log(UART_OUT, "XX: %d |%s|\r\n", l, uartBuf);
+      ////print_log(UART_OUT, "XX: %d |%s|\r\n", l, uartBuf);
 			if (l)
 			{
 				//should we stop with CTRL-Z
@@ -999,8 +1005,11 @@ FLASHMEM ECMD_DEC_Status CMD_sdwrite(TCMD_DEC_Results* res, EResultOut out)
 					bufIdx += 2;
 
 					//write all to disk, close and release all
-          print_log(UART_OUT, "XX: %d |%s|\r\n", bufIdx, multiLineBuf);
+          ////print_log(UART_OUT, "XX: %d |%s|\r\n", bufIdx, multiLineBuf);
+
+          SDCARD_writeFile(fname, multiLineBuf);
 						  
+          MEM_PoolFree(fname);
 					MEM_PoolFree(multiLineBuf);
 					break;
 				}
@@ -1012,8 +1021,6 @@ FLASHMEM ECMD_DEC_Status CMD_sdwrite(TCMD_DEC_Results* res, EResultOut out)
 				bufIdx += 2;
 			}
 		} /* end while */
-
-	  ////SDCARD_writeFile(res->str);
 
 	  return CMD_DEC_OK;
   }
@@ -1354,9 +1361,13 @@ FLASHMEM ECMD_DEC_Status CMD_picoc(TCMD_DEC_Results *res, EResultOut out)
 
 FLASHMEM ECMD_DEC_Status CMD_picocExec(TCMD_DEC_Results *res, EResultOut out) {
   if (pico_c_isRunning()) {
-    int strLen = (int)strlen(res->str);
-    res->ctl = 1;             //break entire command line, take as one line
-    Parse("PICOC", res->str, strLen, TRUE);
+    if (res->str) {
+      //can be NULL
+      int strLen = (int)strlen(res->str);
+      res->ctl = 1;             //break entire command line, take as one line
+      if (strLen)               //ATT: a string as #define is a comment -> empty string = NULL!
+        Parse("PICOC", res->str, strLen, TRUE);
+    }
   }
 
   return CMD_DEC_OK;
@@ -1550,381 +1561,54 @@ int itcmVar FASTRUN;
 
 #define FSTR(str) ({static const char data[] FASTRUN = (str); &data[0];})
 
-#if 0
+void __nop(void) {
+  asm("nop");
+}
+
+#define NOP10 __nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();
+#define NOP100 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10
+#define NOP1000 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100
+
 void testCode(void) {
   print_log(UART_OUT, FSTR("helllo from flash\r\n"));
-}
-#endif
+  NOP1000
+  NOP1000
+  NOP100
+  NOP100
+  NOP100
+  NOP100
+  NOP100
+  NOP100
 
-#if 0
-void testCode2(void) {
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"));
-  print_log(UART_OUT, FSTR("hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIFFFFFF\r\n"));
-}
-#endif
+  NOP10
+  NOP10
+  NOP10
+  NOP10
+  NOP10
+  NOP10
 
-#if 1
-FASTRUN void NOP() {
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
+  __nop();
+  __nop();
+  __nop();
+  __nop();
+  __nop();
+  __nop();
+  __nop();
+  __nop();
+  /* linker script: ITCM 256K - OK, works */
 
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-
-#if 0
-//this crashes - esp. if the linker script is wrong!
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
-asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop"); asm ("nop");
+/* change it to #if 1 and 512K ITCM in linker script - FAILS!
+ * use in linker script 256K ITCM - it FAILS on comnpile - correct!
+ * compile clean with #if 1 and 512K ITCM - but it CRASHES after UART connected!
+ */
+#if 0         /* #if 1 - FAILS !!!!! */
+  /* linker script: ITCM 256K - FAILS (on compile), too much code!
+   * change linker script to ITCM 512K - OK on compile, on startup it crashes! (after UART connected)
+   * it reports 288 KB of code for ITCM (WRONG! - cannot work)
+   */
+  __nop();
 #endif
 }
-
-void testCode3() {
-  NOP();
-  print_log(UART_OUT, "hAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCCDDDDDDDDDDDEEEEEEEEEEE\r\n"); 
-}
-#endif
 
 ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
   (void)out;
@@ -1939,7 +1623,7 @@ ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {
   print_log(UART_OUT, "XX: %d\r\n", itcmVar);
 #endif
 #if 1
-  testCode3();  
+  testCode();  
 #endif
   return CMD_DEC_OK;
 }

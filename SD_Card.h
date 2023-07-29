@@ -12,7 +12,7 @@ int  SDCARD_fgets(char *p, int len, void *file);
 void SDCARD_ShowDir(EResultOut out);
 int  SDCARD_format(void);
 int  SDCARD_delete(const char *fname);
-int  SDCARD_writeFile(const char *fname);
+int  SDCARD_writeFile(const char *fname, const char *buf);
 
 ECMD_DEC_Status SDCARD_Exec(TCMD_DEC_Results *res, EResultOut out);
 

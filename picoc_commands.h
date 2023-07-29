@@ -36,6 +36,7 @@ extern void CmdPoll(struct ParseState *Parser, struct Value *ReturnValue, struct
 #endif
 #ifdef WITH_SCRIPTS
 extern void LibOpenScript(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
+extern void LibOpenScriptEx(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 extern void LibGetExitVal(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 #endif
 

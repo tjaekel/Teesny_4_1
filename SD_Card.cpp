@@ -305,12 +305,11 @@ int SDCARD_delete(const char *fname) {
     return 0;
 }
 
-int SDCARD_writeFile(const char *fname) {
+int SDCARD_writeFile(const char *fname, const char *buf) {
   File MyFile = SD.open(fname, FILE_WRITE_BEGIN);
 
   if (MyFile) {
-    MyFile.write("this is a test\r\n", 16);
-    MyFile.write("Good bye\r\n", 10);
+    MyFile.write(buf, strlen(buf));
 
     MyFile.close();
 

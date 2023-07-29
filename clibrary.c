@@ -848,6 +848,7 @@ const struct LibraryFunction CLibrary[] =
 #ifdef WITH_SCRIPTS
     /* open a script file and process it */
     { LibOpenScript,	  (const char *)"int RunScript(char *);" },
+    { LibOpenScriptEx,	(const char *)"int RunScriptEx(char *);" },
     { LibGetExitVal,	  (const char *)"int ExitValue();" },
 #endif
 #if 1

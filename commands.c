@@ -290,6 +290,32 @@ void LibOpenScript(struct ParseState *Parser, struct Value *ReturnValue, struct 
   PlatformExit();
 }
 
+void LibOpenScriptEx(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+    (void)Parser;
+    (void)ReturnValue;
+    (void)NumArgs;
+
+  char filename[255];
+  strcpy(filename, Param[0]->Val->NativePointer);
+
+  //ATT: this deletes all definitions done before!
+  ////Cleanup();
+  ////Initialise();
+  /*
+   * if we do the lines above we can reload a script with definitions, but there is an error right after
+   * the RunScript and next command - no idea why (an invalid character left somewhere?)
+   * If we do not clean it works fine, except: a variable definition remains defined, we get an error.
+   * We could undefine via #undef var; which works for variables. What about function definitions?
+   * But if we use #undef var; and var already exists - also an error.
+   */
+  PlatformScanFile(filename);
+  /*
+   * cleanup afterwards - otherwise the parser is confused and sees an invalid identifier
+   */
+  PlatformExit();
+}
+
 extern int ExitValue;
 
 void LibGetExitVal(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
