@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __DEBUG_SYS__
-#define __DEBUG_SYS__
+#ifndef __DEFINE_SYS__
+#define __DEFINE_SYS__
 
 /* ------------------------- configuration ---------------------------------*/
 #define WITH_SDCARD

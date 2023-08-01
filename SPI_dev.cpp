@@ -60,13 +60,14 @@ int SPI_setClock(int clkspeed) {
 
 #ifdef SPI_DMA_MODE
 int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len) {
-  if (gCFGparams.DebugFlags & DBG_SPI) {
-    print_log(UART_OUT, "*D: SPI Tx:\r\n");
-    hex_dump(tx, len, 1, UART_OUT);
-  }
-
   //place semaphore around it, so we can use in concurrent INT handlers
   if( xSemaphoreTake( xSemaphore, ( TickType_t ) 1000 ) == pdTRUE ) {
+
+    if (gCFGparams.DebugFlags & DBG_SPI) {
+      print_log(UART_OUT, "*D: SPI%1d Tx:\r\n", num);
+      hex_dump(tx, len, 1, UART_OUT);
+    }
+
     if (num) {
       TsyDMASPI0.begin(ssPin2, SPISettings(gCFGparams.SPI1br, (gCFGparams.SPI1mode & 0xF0) >> 4, (gCFGparams.SPI1mode & 0xF) << 2));
     } else {
@@ -75,12 +76,12 @@ int SPI_transaction(int num, const unsigned char *tx, unsigned char *rx, int len
     TsyDMASPI0.transfer(tx, rx, len);
     ////TsyDMASPI0.end();
 
-    xSemaphoreGive( xSemaphore );
-
     if (gCFGparams.DebugFlags & DBG_SPI) {
-      print_log(UART_OUT, "*D: SPI Rx:\r\n");
+      print_log(UART_OUT, "*D: SPI%1d Rx:\r\n", num);
       hex_dump(rx, len, 1, UART_OUT);
     }
+
+    xSemaphoreGive( xSemaphore );
   }
   else {
     print_log(UART_OUT, "*E: SPI semaphore timeout\r\n");

@@ -1,6 +1,6 @@
 # Teesny_4_1
  Arduino Teensy 4.1 project<br>
- version: 1.1.0
+ version: 1.5
 
 ## Features
 - USB VCP UART shell (for interactive commands)
@@ -18,6 +18,8 @@
 ## Pico-C needs EXTMEM
 ATTENTION: the Pico-C "picoc" uses the external QSPI memory (not flash, both as RAM, 16 MB)<br>
 You have to have 2x QSPI RAM chip soldered, otherwise disable Pico-C and do not start (via "picoc" on UART command line)
+Remark:
+Project has been changed to use just internal SRAM, even for PICOC-C. No need for EXTMEM.
 
 ## Python Script
 A Python script example to use server on port 80 is added: fire MCU commands from
@@ -31,6 +33,10 @@ This project uses now FreeRTOS, not TeensyThreads anymore! (needed for GPIO inte
 You have to install the ZIP library:<br>
 see and get from here:<br>
 https://github.com/tsandmann/freertos-teensy
+
+## Attention - Linker Script
+In order to compile and an error free result: you have to use a modified Linker Script.
+Please, find it in the repository.
 
 ## How to use?
 When compiled and flashed, open UART terminal (any baudrate is fine)<br>

@@ -259,7 +259,7 @@ const TCMD_DEC_Command Commands[] /*FASTRUN*/ = {
 		},
     {
 				.cmd = (const char*)"ggpio",
-				.help = (const char*)"get GPIO inputs",
+				.help = (const char*)"get GPIO inputs, [-d] display",
 				.func = CMD_ggpio
 		},
     {
@@ -1471,8 +1471,14 @@ FLASHMEM ECMD_DEC_Status CMD_pgpio(TCMD_DEC_Results *res, EResultOut out) {
 FLASHMEM ECMD_DEC_Status CMD_ggpio(TCMD_DEC_Results *res, EResultOut out) {
   unsigned long val;
 
-  val = GPIOgetPins();
-  print_log(out, (const char *)"GPIOs: %08lx\r\n", val);
+  if (res->opt) {
+    if (strncmp(res->opt, "-d", 2) == 0) {
+      GPIOgetPinsDisplay(out);
+    }
+  } else {
+    val = GPIOgetPins();
+    print_log(out, (const char *)"GPIOs: %08lx\r\n", val);
+  }
 
   return CMD_DEC_OK;
 }
@@ -1561,53 +1567,8 @@ int itcmVar FASTRUN;
 
 #define FSTR(str) ({static const char data[] FASTRUN = (str); &data[0];})
 
-void __nop(void) {
-  asm("nop");
-}
-
-#define NOP10 __nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();__nop();
-#define NOP100 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10 NOP10
-#define NOP1000 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100 NOP100
-
 void testCode(void) {
   print_log(UART_OUT, FSTR("helllo from flash\r\n"));
-  NOP1000
-  NOP1000
-  NOP100
-  NOP100
-  NOP100
-  NOP100
-  NOP100
-  NOP100
-
-  NOP10
-  NOP10
-  NOP10
-  NOP10
-  NOP10
-  NOP10
-
-  __nop();
-  __nop();
-  __nop();
-  __nop();
-  __nop();
-  __nop();
-  __nop();
-  __nop();
-  /* linker script: ITCM 256K - OK, works */
-
-/* change it to #if 1 and 512K ITCM in linker script - FAILS!
- * use in linker script 256K ITCM - it FAILS on comnpile - correct!
- * compile clean with #if 1 and 512K ITCM - but it CRASHES after UART connected!
- */
-#if 0         /* #if 1 - FAILS !!!!! */
-  /* linker script: ITCM 256K - FAILS (on compile), too much code!
-   * change linker script to ITCM 512K - OK on compile, on startup it crashes! (after UART connected)
-   * it reports 288 KB of code for ITCM (WRONG! - cannot work)
-   */
-  __nop();
-#endif
 }
 
 ECMD_DEC_Status CMD_test(TCMD_DEC_Results *res, EResultOut out) {

@@ -18,7 +18,7 @@ File file;
 // file interface
 static uint32_t nbytes, us;
 
-void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
+FLASHMEM void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
 {
   nbytes = 0;
   ////Serial.printf("*I: opening %s %d %d\r\n", fname, write, O_READ);
@@ -38,14 +38,14 @@ void* tftp_fs_open(const char *fname, const char *mode, uint8_t write)
   return (void *)fname;
 }
 
-void tftp_fs_close(void *handle)
+FLASHMEM void tftp_fs_close(void *handle)
 {
   us = micros() - us;
   file.close();
   ////Serial.printf("*I: closed %d bytes %d us\r\n", nbytes, us);
 }
 
-int tftp_fs_read(void *handle, void *buf, int bytes)
+FLASHMEM int tftp_fs_read(void *handle, void *buf, int bytes)
 {
   int ret = 0;
 
@@ -58,7 +58,7 @@ int tftp_fs_read(void *handle, void *buf, int bytes)
   return ret;
 }
 
-int tftp_fs_write(void *handle, void *buf, int bytes)
+FLASHMEM int tftp_fs_write(void *handle, void *buf, int bytes)
 {
   int ret;
 

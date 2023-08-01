@@ -41,8 +41,10 @@ typedef struct structCFGParams {
 
 extern tCFGParams gCFGparams;
 
+/* debug flags */
 #define DBG_VERBOSE               (1 <<  0)
 #define DBG_SPI                   (1 <<  1)
+#define DBG_NO_DEFHANDLER         (1 <<  2)
 #define DBG_NETWORK               (1 << 31)
 
 int CFG_Read(void);

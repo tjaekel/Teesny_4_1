@@ -137,10 +137,14 @@ unsigned short picoc_GetINTStatus(int num) {
 }
 
 static const unsigned char cSpiTx[960 + 4] PROGMEM = { 0x02, 0x00, 0x06, 0xF0 /*rest zero*/};
+static const unsigned char cSpiTx2[4] PROGMEM = { 0x02, 0x00, 0x00, 0x00};
 
 void picoc_DefaultINTHandlerC(int num) {
   unsigned short r;
-  SPI_transaction(num, cSpiTx, rxBuf, 960 + 4);
+  if (num)
+    SPI_transaction(num, cSpiTx2, rxBuf, 4);
+  else
+    SPI_transaction(num, cSpiTx, rxBuf, 960 + 4);
 
   //get INT_STATUS
   r = rxBuf[2];
@@ -149,7 +153,7 @@ void picoc_DefaultINTHandlerC(int num) {
   sINTStatus[num] = r;
 
   if (num)
-    UDP_send(8082, rxBuf, 960 + 4);
+    UDP_send(8082, rxBuf, 4);
   else
     UDP_send(8081, rxBuf, 960 + 4);
 }

@@ -18,11 +18,13 @@ static TaskHandle_t xTaskToNotify[2] = {NULL, NULL};
 static volatile int sHandlerRunning[2] = {0, 0};
 
 const tGPIOcfg GPIOpins[] = {
-  {28, "pin 28"},
-  {29, "pin 29"},
-  {30, "pin 30"},
-  {31, "pin 31"},
-  {32, "pin 32"},
+  {28, GPIO_WR | GPIO_RD,  "p28"},
+  {29, GPIO_WR | GPIO_RD,  "p29"},
+  {30, GPIO_WR | GPIO_RD,  "p30"},
+  {31, GPIO_WR | GPIO_RD,  "p31"},
+  {32, GPIO_WR | GPIO_RD,  "p32"},
+  {23, GPIO_INT | GPIO_RD, "INT0"},
+  {22, GPIO_INT | GPIO_RD, "INT1"}
 };
 
 void GPIO_Interrupt1() {
@@ -34,18 +36,18 @@ void GPIO_Interrupt1() {
   {
     sHandlerRunning[0] = 1;
 
-  /* At this point xTaskToNotify should not be NULL as a transmission was
-     in progress. */
-  configASSERT(xTaskToNotify[0] != NULL );
+    /* At this point xTaskToNotify should not be NULL as a transmission was
+       in progress. */
+    configASSERT(xTaskToNotify[0] != NULL );
 
-  /* Notify the task that the transmission is complete. */
-  vTaskNotifyGiveIndexedFromISR(xTaskToNotify[0], 0, &xHigherPriorityTaskWoken );
+    /* Notify the task that the transmission is complete. */
+    vTaskNotifyGiveIndexedFromISR(xTaskToNotify[0], 0, &xHigherPriorityTaskWoken );
 
-  /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-  should be performed to ensure the interrupt returns directly to the highest
-  priority task.  The macro used for this purpose is dependent on the port in
-  use and may be called portEND_SWITCHING_ISR(). */
-  portYIELD_FROM_ISR(xHigherPriorityTaskWoken );
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+       should be performed to ensure the interrupt returns directly to the highest
+       priority task.  The macro used for this purpose is dependent on the port in
+       use and may be called portEND_SWITCHING_ISR(). */
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken );
   }
 }
 
@@ -58,18 +60,18 @@ void GPIO_Interrupt2() {
   {
     sHandlerRunning[1] = 1;
 
-  /* At this point xTaskToNotify should not be NULL as a transmission was
-     in progress. */
-  configASSERT(xTaskToNotify[1] != NULL );
+    /* At this point xTaskToNotify should not be NULL as a transmission was
+       in progress. */
+    configASSERT(xTaskToNotify[1] != NULL );
 
-  /* Notify the task that the transmission is complete. */
-  vTaskNotifyGiveIndexedFromISR(xTaskToNotify[1], 0, &xHigherPriorityTaskWoken );
+    /* Notify the task that the transmission is complete. */
+   vTaskNotifyGiveIndexedFromISR(xTaskToNotify[1], 0, &xHigherPriorityTaskWoken );
 
-  /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-  should be performed to ensure the interrupt returns directly to the highest
-  priority task.  The macro used for this purpose is dependent on the port in
-  use and may be called portEND_SWITCHING_ISR(). */
-  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+       should be performed to ensure the interrupt returns directly to the highest
+       priority task.  The macro used for this purpose is dependent on the port in
+       use and may be called portEND_SWITCHING_ISR(). */
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
   }
 }
 
@@ -118,7 +120,8 @@ void GPIO_thread1(void *pvParameters) {
     if ( ! picoc_INThandler()) {
       if (gCFGparams.DebugFlags & DBG_VERBOSE)
         print_log(UART_OUT, "INT0: %ld\r\n", INTCount[0]);
-      picoc_DefaultINTHandlerC(0);
+      if ( ! (gCFGparams.DebugFlags & DBG_NO_DEFHANDLER))
+        picoc_DefaultINTHandlerC(0);
     }
     else {
       INTHandledCount[0]++;
@@ -146,7 +149,8 @@ void GPIO_thread2(void *pvParameters) {
     if ( ! picoc_INThandler2()) {
       if (gCFGparams.DebugFlags & DBG_VERBOSE)
         print_log(UART_OUT, "INT1: %ld\r\n", INTCount[1]);
-      picoc_DefaultINTHandlerC(1);
+      if ( ! (gCFGparams.DebugFlags & DBG_NO_DEFHANDLER))
+        picoc_DefaultINTHandlerC(1);
     }
     else {
       INTHandledCount[1]++;
@@ -171,25 +175,27 @@ FLASHMEM void GPIO_configPins(void) {
   unsigned long mask = 0x1;
 
   for (i = 0; i < (sizeof(GPIOpins) / sizeof(tGPIOcfg)); i++) {
-    if (gCFGparams.GPIOdir & mask) {
-      //configure as output
-      if (gCFGparams.GPIOod & mask) {
-        pinMode(GPIOpins[i].pin, arduino::OUTPUT_OPENDRAIN);
+    if ( ! (GPIOpins[i].pinMode & GPIO_INT)) {
+      if (gCFGparams.GPIOdir & mask) {
+        //configure as output
+        if (gCFGparams.GPIOod & mask) {
+          pinMode(GPIOpins[i].pin, arduino::OUTPUT_OPENDRAIN);
+        }
+        else {
+          pinMode(GPIOpins[i].pin, arduino::OUTPUT);
+        }
+        //set default output value
+        if (gCFGparams.GPIOval & mask) {
+          digitalWrite(GPIOpins[i].pin, arduino::HIGH);
+        }
+        else {
+          digitalWrite(GPIOpins[i].pin, arduino::LOW);
+        }
       }
       else {
-        pinMode(GPIOpins[i].pin, arduino::OUTPUT);
+        //configure as input
+        pinMode(GPIOpins[i].pin, arduino::INPUT);
       }
-      //set default output value
-      if (gCFGparams.GPIOval & mask) {
-        digitalWrite(GPIOpins[i].pin, arduino::HIGH);
-      }
-      else {
-        digitalWrite(GPIOpins[i].pin, arduino::LOW);
-      }
-    }
-    else {
-      //configure as input
-      pinMode(GPIOpins[i].pin, arduino::INPUT);
     }
 
     mask <<= 1;
@@ -224,24 +230,26 @@ FLASHMEM void GPIO_setup(void) {
   ::xTaskCreate(GPIO_thread2, "GPIO_thread2", THREAD_STACK_SIZE_GPIO, nullptr, THREAD_PRIO_GPIO, nullptr);
 }
 
-void GPIO_putPins(unsigned long vals) {
+FLASHMEM void GPIO_putPins(unsigned long vals) {
   size_t i;
   unsigned long mask = 0x1;
 
   for (i = 0; i < (sizeof(GPIOpins) / sizeof(tGPIOcfg)); i++) {
-    if (vals & mask) {
-      //set high
-      digitalWrite(GPIOpins[i].pin, arduino::HIGH);
-    }
-    else {
-      digitalWrite(GPIOpins[i].pin, arduino::LOW);
+    if ( ! (GPIOpins[i].pinMode & GPIO_INT)) {
+      if (vals & mask) {
+        //set high
+        digitalWrite(GPIOpins[i].pin, arduino::HIGH);
+      }
+      else {
+        digitalWrite(GPIOpins[i].pin, arduino::LOW);
+      }
     }
 
     mask <<= 1;
   }
 }
 
-unsigned long GPIOgetPins(void) {
+FLASHMEM unsigned long GPIOgetPins(void) {
   size_t i;
   unsigned long mask = 0x1;
   unsigned long vals = 0;
@@ -259,7 +267,21 @@ unsigned long GPIOgetPins(void) {
   return vals;
 }
 
-void GPIO_resetPin(unsigned long val) {
+FLASHMEM void GPIOgetPinsDisplay(EResultOut out) {
+  int i;
+
+  for (i = (sizeof(GPIOpins) / sizeof(tGPIOcfg)) -1; i >= 0; i--) {
+    print_log(out, (const char *)"%4s ", GPIOpins[i].desc);
+  }
+  print_log(out, (const char *)"\r\n");
+
+  for (i = (sizeof(GPIOpins) / sizeof(tGPIOcfg)) -1; i >= 0; i--) {
+    print_log(out, (const char *)" %1d   ", digitalRead(GPIOpins[i].pin));
+  }
+  print_log(out, (const char *)"\r\n");
+}
+
+FLASHMEM void GPIO_resetPin(unsigned long val) {
   if (val)
     digitalWrite(2, arduino::HIGH);
   else
@@ -268,7 +290,7 @@ void GPIO_resetPin(unsigned long val) {
 
 /* helper function to set GPIO Output register before configuring mode */
 
-void GPIO_setOutValue(uint8_t pin, uint8_t val)
+FLASHMEM void GPIO_setOutValue(uint8_t pin, uint8_t val)
 {
 	const struct digital_pin_bitband_and_config_table_struct *p;
 	uint32_t mask;
@@ -284,7 +306,7 @@ void GPIO_setOutValue(uint8_t pin, uint8_t val)
 	}
 }
 
-void GPIO_testSpeed(void) {
+FLASHMEM void GPIO_testSpeed(void) {
 #if 0
   /* this is 10x faster! assuming, this code runs on ITCM */
   while (1) {

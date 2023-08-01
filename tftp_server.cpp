@@ -1,5 +1,5 @@
 // tftp server
-// 4 byte header, 512 byte data,  network byte order
+// 4 byte header, 512 byte data, network byte order
 
 #include <QNEthernet.h>
 #include <QNEthernetUDP.h>
@@ -56,8 +56,8 @@ struct tftp_state {
 
 static struct tftp_state tftp_state;
 
-// tftp packet  4-byte header 512-byte payload
-uint16_t pktin[256], pktout[258];
+// tftp packet 4-byte header 512-byte payload
+uint16_t pktin[256 + 2], pktout[258]; // (TFTP_MAX_PAYLOAD_SIZE + TFTP_HEADER_LENGTH) / sizeof(uint16_t)
 uint8_t *pin = (uint8_t *) pktin;
 uint8_t *pout = (uint8_t *) pktout;
 uint8_t *pbufin = (uint8_t *) &pktin[2];
@@ -66,14 +66,14 @@ int send_lth;
 
 EthernetUDP Udp;
 
-void close_connection() {
+FLASHMEM void close_connection() {
   if (tftp_state.handle) {
     tftp_state.ctx->close(tftp_state.handle);
     tftp_state.handle = NULL;
   }
 }
 
-void send_error(IPAddress host, int port, int code, char *msg) {
+FLASHMEM void send_error(IPAddress host, int port, int code, char *msg) {
   int n = strlen(msg) + 1 + TFTP_HEADER_LENGTH;
   pktout[0] = swap2(TFTP_ERROR);
   pktout[1] = swap2(code);
@@ -85,13 +85,13 @@ void send_error(IPAddress host, int port, int code, char *msg) {
   Serial.printf("%s\r\n", msg);
 }
 
-void resend() {
+FLASHMEM void resend() {
   Udp.beginPacket(tftp_state.addr, tftp_state.port);
   Udp.write(pout, send_lth);
   Udp.endPacket();
 }
 
-void send_ack(int blknum) {
+FLASHMEM void send_ack(int blknum) {
   pktout[0] = swap2(TFTP_ACK);
   pktout[1] = swap2(blknum);
   send_lth = TFTP_HEADER_LENGTH;
@@ -99,10 +99,9 @@ void send_ack(int blknum) {
   Udp.write(pout, send_lth);
   Udp.endPacket();
   tftp_state.last_pkt = millis();
-
 }
 
-void send_data() {
+FLASHMEM void send_data() {
   int ret;
 
   pktout[0] = swap2(TFTP_DATA);
@@ -121,17 +120,17 @@ void send_data() {
   resend();
 }
 
-void recv() {
+FLASHMEM void recv() {
   int rlth, port;
   uint16_t op, blk;
   IPAddress remote;
-  char *mode = (char *)"binary";  // not used
+  char *mode = (char *)"binary";
 
   rlth = Udp.read(pin, sizeof(pktin));
   //needed for QNEthernet
   if ( ! rlth) {
     ////threads.delay(10);
-    vTaskDelay(10);
+    vTaskDelay(1);
     return;
   }
 
@@ -250,7 +249,7 @@ void recv() {
 
 #if 0
 //if not as thread
-void tftp_init(const struct tftp_context *ctx)
+FLASHMEM void tftp_init(const struct tftp_context *ctx)
 {
   tftp_state.handle    = NULL;
   tftp_state.port      = 0;
@@ -280,7 +279,7 @@ void tftp_init(const struct tftp_context *ctx)
 
 extern /*const*/ tftp_context tftp_ctx;
 
-void tftp_thread(void *pvParameters) {
+FLASHMEM void tftp_thread(void *pvParameters) {
   tftp_state.handle    = NULL;
   tftp_state.port      = 0;
   tftp_state.ctx       = &tftp_ctx;
@@ -292,7 +291,7 @@ void tftp_thread(void *pvParameters) {
     if (Udp.parsePacket())
       recv();
     else
-      vTaskDelay(10);
+      vTaskDelay(1);
 
     uint32_t ms = millis();
     if (tftp_state.handle != NULL) {
@@ -311,6 +310,6 @@ void tftp_thread(void *pvParameters) {
   }
 }
 
-void tftp_kill(void) {
+FLASHMEM void tftp_kill(void) {
   Udp.stop();
 }
